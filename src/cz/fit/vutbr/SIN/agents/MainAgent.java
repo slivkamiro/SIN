@@ -112,7 +112,7 @@ public class MainAgent extends Agent {
 
 			@Override
 			public void action() {
-				for(int i = 0; i < num; i++) {
+				for (int i = 0; i < num; i++) {
 					try {						
 						String[] direction = { myAgent.getAID().getLocalName(),
 												(int) (Math.random()*4+1)+"",
