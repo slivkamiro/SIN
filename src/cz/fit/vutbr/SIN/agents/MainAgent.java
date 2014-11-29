@@ -1,11 +1,9 @@
 package cz.fit.vutbr.SIN.agents;
 
-import jade.core.AID;
 import jade.core.Agent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -23,27 +21,8 @@ import java.util.List;
 
 import cz.fit.vutbr.SIN.gui.MainWindow;
 
+@SuppressWarnings("serial")
 public class MainAgent extends Agent {
-	
-	// Semaphore colors
-	public static final int GREEN = 6;
-	public static final int RED = 7;
-	
-	private int semaphoreNorth = GREEN;
-	private int semaphoreSouth = GREEN;
-	private int semaphoreEast = RED;
-	private int semaphoreWest = RED;
-	
-	// Queues on semaphores
-	private List<AID> qN;
-	private List<AID> qS;
-	private List<AID> qE;
-	private List<AID> qW;
-	
-	// These flags says if there is something in crossroad in two directions
-	private boolean centerFull = false;
-	private boolean direction1 = false;
-	private boolean direction2 = false;
 	
 	private MainWindow gui;
 	
@@ -56,6 +35,8 @@ public class MainAgent extends Agent {
 		gui = new MainWindow(this);
 		events = new ArrayList<String>();
 		
+		//crossRoadAgent = 
+		
 		Profile p = new ProfileImpl();
 		carAgentsContainer = Runtime.instance().createAgentContainer(p);
 		
@@ -63,8 +44,8 @@ public class MainAgent extends Agent {
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
 		ServiceDescription sd = new ServiceDescription();
-		sd.setType("crossroad-control");
-		sd.setName("CrossRoad-service");
+		sd.setType("main-control");
+		sd.setName("Main-service");
 		dfd.addServices(sd);
 		try {
 			DFService.register(this, dfd);
@@ -72,6 +53,7 @@ public class MainAgent extends Agent {
 		catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
+		
 		addBehaviour(new CyclicBehaviour() {
 
 			@Override
@@ -112,12 +94,17 @@ public class MainAgent extends Agent {
 
 			@Override
 			public void action() {
-				for (int i = 0; i < num; i++) {
+				for(int i = 0; i < num; i++) {
 					try {						
+//						String[] direction = { myAgent.getAID().getLocalName(),
+//												(int) (Math.random()*4+1)+"",
+//												(int) (Math.random()*4+1)+""
+//												};		
+						// DEBUG - NORT SOUTH should be green initialy
 						String[] direction = { myAgent.getAID().getLocalName(),
-												(int) (Math.random()*4+1)+"",
-												(int) (Math.random()*4+1)+""
-												};			
+								(int) (Math.random()*2+1)+"",
+								(int) (Math.random()*4+1)+""
+								};			
 						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+i, CarAgent.class.getCanonicalName(), direction);
 						agent.start();
 						events.add("MainAgent: car "+prefix+"#"+i+"dispatched\n");
@@ -136,51 +123,6 @@ public class MainAgent extends Agent {
 	public void startSimulation() {
 		//addBehaviour(new CrossroadControlBehaviour());
 		
-	}
-	
-	private class CrossroadControlBehaviour extends Behaviour {
-
-		@Override
-		public void action() {
-			ACLMessage msg = myAgent.receive();
-			if(msg != null) {
-				ACLMessage reply = msg.createReply();
-				if(msg.getPerformative() == ACLMessage.REQUEST) {
-					// Parse request
-					String[] msgContent = msg.getContent().split(" ");
-					if(msgContent[0].equals("GET_SEM")) {
-						// Get semaphore light
-						Integer s = Integer.parseInt(msgContent[1]);
-						Integer semLight = getLightOf(s);
-						if(semLight == RED) {
-							//addToSemaphoreQueue(s,reply);
-						} else {
-							// send green
-						}
-					}
-				}
-			}
-			
-		}
-
-		@Override
-		public boolean done() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-		
-	}
-
-	public Integer getLightOf(Integer s) {
-		if(s == CarAgent.NORTH) {
-			return semaphoreNorth;
-		} else if(s == CarAgent.SOUTH) {
-			return semaphoreSouth;
-		} else if(s == CarAgent.WEST) {
-			return semaphoreWest;
-		} else {
-			return semaphoreEast;
-		}
 	}
 
 }
