@@ -8,6 +8,8 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentContainer;
@@ -37,6 +39,20 @@ public class MainAgent extends Agent {
 		
 		Profile p = new ProfileImpl();
 		carAgentsContainer = Runtime.instance().createAgentContainer(p);
+		
+		// Register the crossroad service in the yellow pages
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("main-control");
+		sd.setName("Main-service");
+		dfd.addServices(sd);
+		try {
+			DFService.register(this, dfd);
+		}
+		catch (FIPAException fe) {
+			fe.printStackTrace();
+		}
 		
 		addBehaviour(new CyclicBehaviour() {
 

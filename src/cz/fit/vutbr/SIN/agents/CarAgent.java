@@ -16,8 +16,6 @@ public class CarAgent extends Agent {
 	public enum CarState {
 		BEFORE_SEMAPHORE,
 		IN_CROSSROAD,
-		CONT_LEFT,
-		CONT_RIGHT_STRAIGHT,
 		OVER_CROSSROAD
 	}
 	
@@ -43,7 +41,7 @@ public class CarAgent extends Agent {
 		
 		state = CarState.BEFORE_SEMAPHORE;
 		
-		// Get  services
+		// Get CrossRoad control service
 		getService("crossroad-control");
 		
 		// Periodically send statistics
@@ -95,7 +93,6 @@ public class CarAgent extends Agent {
 						if(reply != null) {
 							// CrossroadControlService inform about semaphore light
 							if (reply.getPerformative() == ACLMessage.INFORM) {
-								state = CarState.IN_CROSSROAD;
 								messageSent = false;
 							}
 						}
@@ -115,43 +112,29 @@ public class CarAgent extends Agent {
 					}
 					break;
 				case IN_CROSSROAD:
-					if(!turningLeft(source,destination)) {
-						state = CarState.CONT_RIGHT_STRAIGHT;
-					} else {
-						state = CarState.CONT_LEFT;						
-					}
-					break;
-				case CONT_LEFT:
-					// Find out if is it free to go
+					// tell about your intentions and wait for confirmation`
 					if(messageSent) {
 						ACLMessage reply = myAgent.receive(mt);
-						if(reply != null) {
+						if (reply != null) {
 							if(reply.getPerformative() == ACLMessage.CONFIRM) {
 								state = CarState.OVER_CROSSROAD;
 							}
 						}
 					} else {
-						ACLMessage query = new ACLMessage(ACLMessage.QUERY_IF);
+						ACLMessage query = new ACLMessage(ACLMessage.REQUEST);
 						query.addReceiver(crossroadControlService);
-						query.setContent("TURN_LEFT_SAFE "+source);
-						query.setConversationId("turning-left");
+						query.setContent("IN_CR "+source+" "+destination);
+						query.setConversationId("in-crossroad-decision");
 						query.setReplyWith("QUERY-"+myAgent.getLocalName()+"-"+System.currentTimeMillis());
 						myAgent.send(query);
 						messageSent = true;
-						mt = MessageTemplate.and(MessageTemplate.MatchConversationId("turning-left"),
+						mt = MessageTemplate.and(MessageTemplate.MatchConversationId("in-crossroad-decision"),
 								MessageTemplate.MatchInReplyTo(query.getReplyWith()));
 					}
 					break;
 				default:
 					state = CarState.OVER_CROSSROAD;
 			}
-		}
-
-		private boolean turningLeft(Integer source, Integer destination) {
-			return (source == SOUTH && destination == WEST) ||
-					(source == EAST && destination == SOUTH) ||
-					(source == NORTH && destination == EAST) ||
-					(source == WEST && destination == NORTH);
 		}
 
 		@Override
@@ -162,3 +145,4 @@ public class CarAgent extends Agent {
 	}
 	
 }
+>>>>>>> master
