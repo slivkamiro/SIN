@@ -31,6 +31,7 @@ public class CarAgent extends Agent {
 	private Integer source;
 	private Integer destination;
 	private AID crossroadControlService;
+	private AID mainControlService;
 
 	protected void setup() {
 		
@@ -42,17 +43,8 @@ public class CarAgent extends Agent {
 		
 		state = CarState.BEFORE_SEMAPHORE;
 		
-		// Get CrossRoad control service
-		DFAgentDescription template = new DFAgentDescription();
-		ServiceDescription sd = new ServiceDescription();
-		sd.setType("crossroad-control");
-		template.addServices(sd);
-		try {
-			DFAgentDescription[] result = DFService.search(this, template);
-			crossroadControlService = result[0].getName();
-		} catch (FIPAException fe) {
-			fe.printStackTrace();
-		}
+		// Get  services
+		getService("crossroad-control");
 		
 		// Periodically send statistics
 		addBehaviour(new TickerBehaviour(this, 1000){
@@ -71,6 +63,23 @@ public class CarAgent extends Agent {
 		
 	}
 	
+	private void getService( String serviceType) {
+
+		DFAgentDescription template = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType(serviceType);
+		template.addServices(sd);
+		try {
+			DFAgentDescription[] result = DFService.search(this, template);
+				crossroadControlService = result[0].getName();
+		} catch (FIPAException fe) {
+			fe.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	private class RoutingBehaviour extends Behaviour {
 		
 		private boolean messageSent = false;
@@ -86,8 +95,7 @@ public class CarAgent extends Agent {
 						if(reply != null) {
 							// CrossroadControlService inform about semaphore light
 							if (reply.getPerformative() == ACLMessage.INFORM) {
-								Integer light = Integer.parseInt(reply.getContent());
-								state = light == MainAgent.GREEN ? CarState.IN_CROSSROAD : CarState.BEFORE_SEMAPHORE;
+								state = CarState.IN_CROSSROAD;
 								messageSent = false;
 							}
 						}
