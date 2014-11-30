@@ -1,5 +1,8 @@
 package cz.fit.vutbr.SIN.agents;
 
+import jade.content.lang.Codec.CodecException;
+import jade.content.onto.OntologyException;
+import jade.content.onto.basic.Action;
 import jade.core.Agent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
@@ -8,8 +11,11 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.JADEAgentManagement.JADEManagementOntology;
+import jade.domain.JADEAgentManagement.ShutdownPlatform;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentContainer;
@@ -122,6 +128,7 @@ public class MainAgent extends Agent {
 						// DEBUG - NORT SOUTH should be green initialy
 						int src = (int) (Math.random()*4);
 						int dst = (int) (Math.random()*4);
+
 						if (dst == src) {
 							dst = dst == 3 ? dst-1 : dst+1;
 						}
