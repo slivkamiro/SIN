@@ -14,7 +14,6 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.NoninvertibleTransformException;
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -129,7 +128,7 @@ public class MainWindow extends JFrame {
 		
 		eventsArea = new JTextArea();
 		eventsArea.setEditable(false);
-		eventsArea.setColumns(20);
+		eventsArea.setColumns(25);
 		scrollPane.setViewportView(eventsArea);
 		
 		crossroadPanel = new JPanel(){
@@ -257,6 +256,10 @@ public class MainWindow extends JFrame {
 	public void switchSemaphores() {
 			NS = NS == Color.GREEN ? Color.RED : Color.GREEN;
 			WE = WE == Color.GREEN ? Color.RED : Color.GREEN;
+			sourceNorth.setIcon(null);
+			sourceSouth.setIcon(null);
+			sourceWest.setIcon(null);
+			sourceEast.setIcon(null);
 			crossroadPanel.repaint();
 	}
 	
@@ -318,11 +321,7 @@ public class MainWindow extends JFrame {
 	}
 
 	public void showGui() {
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		int centerX = (int)screenSize.getWidth() / 2;
-		int centerY = (int)screenSize.getHeight() / 2;
-		setLocation(centerX - getWidth() / 2, centerY - getHeight() / 2);
-		this.setSize(new Dimension(742,502));
+		this.setSize(new Dimension(802,502));
 		super.setVisible(true);
 		
 	}
