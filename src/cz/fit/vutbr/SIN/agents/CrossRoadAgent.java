@@ -105,6 +105,7 @@ public class CrossRoadAgent extends Agent {
 				if(waitingIn == CarAgent.NORTH) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
+					debugLog("Removed from inner queue "+dirToStr(waitingIn));
 					leftTurn = null;
 					waitingIn = null;
 				}
@@ -126,9 +127,10 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.NORTH) {
+				if(waitingIn == CarAgent.SOUTH) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
+					debugLog("Removed from inner queue "+dirToStr(waitingIn));
 					leftTurn = null;
 					waitingIn = null;
 				}
@@ -150,7 +152,7 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.NORTH) {
+				if(waitingIn == CarAgent.WEST) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
 					leftTurn = null;
@@ -173,7 +175,7 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.NORTH) {
+				if(waitingIn == CarAgent.EAST) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
 					leftTurn = null;

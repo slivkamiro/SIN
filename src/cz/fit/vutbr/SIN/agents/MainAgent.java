@@ -120,8 +120,8 @@ public class MainAgent extends Agent {
 	//												(int) (Math.random()*4+1)+""
 	//												};		
 						// DEBUG - NORT SOUTH should be green initialy
-						int src = (int) (Math.random()*2);
-						int dst = (int) (Math.random()*3);
+						int src = (int) (Math.random()*4);
+						int dst = (int) (Math.random()*4);
 						if (dst == src) {
 							dst = dst == 3 ? dst-1 : dst+1;
 						}
