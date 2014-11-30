@@ -118,10 +118,10 @@ public class MainAgent extends Agent {
 	//												(int) (Math.random()*4+1)+""
 	//												};		
 						// DEBUG - NORT SOUTH should be green initialy
-						int src = (int) (Math.random()*2+1);
-						int dst = (int) (Math.random()*4+1);
+						int src = (int) (Math.random()*2);
+						int dst = (int) (Math.random()*3);
 						if (dst == src) {
-							dst = dst == 4 ? dst-1 : dst+1;
+							dst = dst == 3 ? dst-1 : dst+1;
 						}
 						String[] direction = { src+"", dst+"" };			
 						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+n, CarAgent.class.getCanonicalName(), direction);
