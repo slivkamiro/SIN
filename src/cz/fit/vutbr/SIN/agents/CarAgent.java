@@ -82,7 +82,7 @@ public class CarAgent extends Agent {
 			if (serviceType.equals("main-control"))
 				guiService = result[0].getName();
 			else
-				throw new Exception();
+				crossroadControlService = result[0].getName();
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
 		} catch (Exception e) {

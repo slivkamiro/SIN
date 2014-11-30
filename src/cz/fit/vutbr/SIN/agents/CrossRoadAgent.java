@@ -72,7 +72,8 @@ public class CrossRoadAgent extends Agent {
 			fe.printStackTrace();
 		}
 		
-		// Get  services
+		// Get  service
+		try { Thread.sleep(1000); } catch (Exception e) {}
 		getService("main-control");
 		
 		// Periodically send statistics
@@ -100,7 +101,7 @@ public class CrossRoadAgent extends Agent {
 		send(msg);
 		
 		// DEBUG
-		if (semaphoreNorth == RED){
+		if (semaphoreNorth == GREEN){
 			System.out.println("[XROAD] SOUTH-NORTH opened");
 		}
 		else {
@@ -226,7 +227,7 @@ public class CrossRoadAgent extends Agent {
 		
 	}
 	
-	private simulateCrossroad() {
+	private void simulateCrossroad() {
 	
 		if ( semaphoreNorth == GREEN ) {
 			// NORTH - SOUTH open
@@ -243,7 +244,7 @@ public class CrossRoadAgent extends Agent {
 	private void simulate(Integer s) {
 		if (!isSemaphoreEmpty(s) && isInnerQueueAvailable(s)) {
 			debugLog(" Adding car to inner queue from direction " +  dirToStr(s));
-			addToSemaphoreQueue(s, reply);
+			//addToSemaphoreQueue(s, reply);
 		}
 	}
 	
