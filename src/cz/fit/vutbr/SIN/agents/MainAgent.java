@@ -40,7 +40,7 @@ public class MainAgent extends Agent {
 		Profile p = new ProfileImpl();
 		carAgentsContainer = Runtime.instance().createAgentContainer(p);
 		
-		// Register the crossroad service in the yellow pages
+		// Register the gui service in the yellow pages
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
 		ServiceDescription sd = new ServiceDescription();
@@ -61,11 +61,23 @@ public class MainAgent extends Agent {
 				//System.out.println("MainAgent: listening");
 				MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 				ACLMessage msg = myAgent.receive(mt);
-				if(msg != null) {
+				if (msg != null) {
 					//System.out.println("MainAgent: message recieved");
-					events.add(msg.getContent());
-					gui.appendEvents(events);
-					events.clear();
+					String[] content = msg.getContent().split(" ");
+					if (content[0].equals("STATUS")) {
+						events.add(content[1]);
+						gui.appendEvents(events);
+						events.clear();
+					} else if (content[0].equals("SEM_SWITCH")) {
+						gui.switchSemaphores();
+					} else if (content[0].equals("UPDATE_Q")) {
+						gui.updateQueue(CarAgent.NORTH, Integer.parseInt(content[1]));
+						gui.updateQueue(CarAgent.SOUTH, Integer.parseInt(content[2]));
+						gui.updateQueue(CarAgent.WEST, Integer.parseInt(content[3]));
+						gui.updateQueue(CarAgent.EAST, Integer.parseInt(content[4]));
+					} else if (content[0].equals("CAR_DIRECT")) {
+						gui.setArrowOnTo(Integer.parseInt(content[1]), Integer.parseInt(content[2]));
+					}
 				}
 				
 			}
@@ -101,8 +113,7 @@ public class MainAgent extends Agent {
 //												(int) (Math.random()*4+1)+""
 //												};		
 						// DEBUG - NORT SOUTH should be green initialy
-						String[] direction = { myAgent.getAID().getLocalName(),
-								(int) (Math.random()*2+1)+"",
+						String[] direction = { (int) (Math.random()*2+1)+"",
 								(int) (Math.random()*4+1)+""
 								};			
 						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+i, CarAgent.class.getCanonicalName(), direction);

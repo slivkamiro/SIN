@@ -53,11 +53,34 @@ public class MainWindow extends JFrame {
 	private JLabel sourceWest;
 	private JLabel sourceEast;
 	
-	private ImageIcon left = new ImageIcon(getClass().getResource("resources/left.png"));
-	private ImageIcon right = new ImageIcon(getClass().getResource("resources/right.png"));
-	private ImageIcon straight = new ImageIcon(getClass().getResource("resources/straight.png"));
+	private ImageIcon iconNS;
+	private ImageIcon iconNW;
+	private ImageIcon iconNE;
+	private ImageIcon iconSN;
+	private ImageIcon iconSW;
+	private ImageIcon iconSE;
+	private ImageIcon iconEW;
+	private ImageIcon iconES;
+	private ImageIcon iconEN;
+	private ImageIcon iconWE;
+	private ImageIcon iconWS;
+	private ImageIcon iconWN;
 	
 	public MainWindow(MainAgent a) {
+		
+		iconNS = new ImageIcon(getClass().getResource("resources/NS.png"));
+		iconNW = new ImageIcon(getClass().getResource("resources/NW.png"));
+		iconNE = new ImageIcon(getClass().getResource("resources/NE.png"));
+		iconSN = new ImageIcon(getClass().getResource("resources/SN.png"));
+		iconSW = new ImageIcon(getClass().getResource("resources/SW.png"));
+		iconSE = new ImageIcon(getClass().getResource("resources/SE.png"));
+		iconES = new ImageIcon(getClass().getResource("resources/ES.png"));
+		iconEW = new ImageIcon(getClass().getResource("resources/EW.png"));
+		iconEN = new ImageIcon(getClass().getResource("resources/EN.png"));
+		iconWS = new ImageIcon(getClass().getResource("resources/WS.png"));
+		iconWN = new ImageIcon(getClass().getResource("resources/WN.png"));
+		iconWE = new ImageIcon(getClass().getResource("resources/WE.png"));
+		
 		setTitle("Super Duper krizovatka");
 		getContentPane().setLayout(new BorderLayout(0, 0));
 		
@@ -237,31 +260,58 @@ public class MainWindow extends JFrame {
 			crossroadPanel.repaint();
 	}
 	
-	public void setArrowOnTo(Integer source, Integer destination) {
-		
-		if(source == CarAgent.NORTH) {
-			if(destination == CarAgent.EAST) {
-				sourceNorth.setIcon(rotateIcon(left,90,sourceNorth));
-			} else if(destination == CarAgent.WEST) {
-				
-			}
+	public void updateQueue(Integer source,Integer val) {
+		if (source == CarAgent.EAST) {
+			lblEastQ.setText(val.toString());
+		} else if (source == CarAgent.WEST) {
+			lblWestQ.setText(val.toString());
+		} else if (source == CarAgent.NORTH) {
+			lblNorthQ.setText(val.toString());
+		} else {
+			lblSouthQ.setText(val.toString());
 		}
 	}
 	
-	private ImageIcon rotateIcon(ImageIcon ic,int angle, JLabel lbl) {
-		int w = ic.getIconWidth();
-		int h = ic.getIconHeight();
-		int type = BufferedImage.TYPE_INT_ARGB;
-		BufferedImage img = new BufferedImage(h, w, type);
-		Graphics2D g2d = img.createGraphics();
-		AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(angle));
-		g2d.drawImage(ic.getImage(),at,lbl);
-		g2d.dispose();
-		return new ImageIcon(img);
+	public void setArrowOnTo(Integer source, Integer destination) {
+		
+		if (source == CarAgent.NORTH) {
+			if (destination == CarAgent.EAST) {
+				sourceNorth.setIcon(iconNE);
+			} else if(destination == CarAgent.WEST) {
+				sourceNorth.setIcon(iconNW);
+			} else {
+				sourceNorth.setIcon(iconNS);
+			}
+		} else if (source == CarAgent.SOUTH) {
+			if (destination == CarAgent.EAST) {
+				sourceSouth.setIcon(iconSE);
+			} else if(destination == CarAgent.WEST) {
+				sourceSouth.setIcon(iconSW);
+			} else {
+				sourceSouth.setIcon(iconSN);
+			}
+		} else if (source == CarAgent.EAST) {
+			if (destination == CarAgent.NORTH) {
+				sourceEast.setIcon(iconEN);
+			} else if(destination == CarAgent.SOUTH) {
+				sourceEast.setIcon(iconES);
+			} else {
+				sourceEast.setIcon(iconEW);
+			}
+		} else if (source == CarAgent.WEST) {
+			if (destination == CarAgent.NORTH) {
+				sourceWest.setIcon(iconWN);
+			} else if(destination == CarAgent.SOUTH) {
+				sourceWest.setIcon(iconWS);
+			} else {
+				sourceWest.setIcon(iconWE);
+			}
+		}
+		
 	}
 
 	public void appendEvents(List<String> events) {
-		for(String event : events) {
+		for (String event : events) {
 			eventsArea.setText(eventsArea.getText()+event);
 		}
 		eventsArea.repaint();
