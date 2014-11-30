@@ -45,10 +45,9 @@ public class CrossRoadAgent extends Agent {
 	private List<Queue<ACLMessage>> queues;
 	private List< Queue<ACLMessage>> innerQueues;
 	
-	// These flags says if there is something in crossroad in two directions
-	private boolean centerFull = false;
-	private boolean direction1 = false;
-	private boolean direction2 = false;
+	// Information needed for giving way
+	private ACLMessage leftTurn = null;
+	private Integer waitingIn = null;
 	
 	private AID mainControlService;
 
@@ -73,11 +72,11 @@ public class CrossRoadAgent extends Agent {
 		}
 		
 		// Get  service
-		try { Thread.sleep(1000); } catch (Exception e) {}
+		try { Thread.sleep(3000); } catch (Exception e) {}
 		getService("main-control");
 		
 		// Periodically send statistics
-		addBehaviour(new TickerBehaviour(this, 5000){
+		addBehaviour(new TickerBehaviour(this, 15000){
 
 			@Override
 			protected void onTick() {
@@ -87,6 +86,102 @@ public class CrossRoadAgent extends Agent {
 		});
 				
 		addBehaviour(new CrossroadControlBehaviour());
+		
+		// North traffic
+		addBehaviour(new CyclicBehaviour() {
+
+			@Override
+			public void action() {
+				if (semaphoreNorth == GREEN 
+						&& !isSemaphoreEmpty(CarAgent.NORTH) 
+						&& isInnerQueueAvailable(CarAgent.NORTH)) {
+					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.NORTH));
+					ACLMessage reply = queues.get(CarAgent.NORTH).poll();
+					addToInnerDirectionQueue(CarAgent.NORTH, reply);
+					reply.setPerformative(ACLMessage.CONFIRM);
+					myAgent.send(reply);
+					sendStatusToMainControl();
+				}
+				if(waitingIn == CarAgent.NORTH) {
+					myAgent.send(leftTurn);
+					innerQueues.get(waitingIn).poll();
+					leftTurn = null;
+					waitingIn = null;
+				}
+			}
+			
+		});
+		// South traffic
+		addBehaviour(new CyclicBehaviour() {
+
+			@Override
+			public void action() {
+				if (semaphoreSouth == GREEN 
+						&& !isSemaphoreEmpty(CarAgent.SOUTH) 
+						&& isInnerQueueAvailable(CarAgent.SOUTH)) {
+					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.SOUTH));
+					ACLMessage reply = queues.get(CarAgent.SOUTH).poll();
+					addToInnerDirectionQueue(CarAgent.SOUTH, reply);
+					reply.setPerformative(ACLMessage.CONFIRM);
+					myAgent.send(reply);
+					sendStatusToMainControl();
+				}
+				if(waitingIn == CarAgent.NORTH) {
+					myAgent.send(leftTurn);
+					innerQueues.get(waitingIn).poll();
+					leftTurn = null;
+					waitingIn = null;
+				}
+			}
+			
+		});
+		// West traffic
+		addBehaviour(new CyclicBehaviour() {
+
+			@Override
+			public void action() {
+				if (semaphoreWest == GREEN 
+						&& !isSemaphoreEmpty(CarAgent.WEST) 
+						&& isInnerQueueAvailable(CarAgent.WEST)) {
+					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.WEST));
+					ACLMessage reply = queues.get(CarAgent.WEST).poll();
+					addToInnerDirectionQueue(CarAgent.WEST, reply);
+					reply.setPerformative(ACLMessage.CONFIRM);
+					myAgent.send(reply);
+					sendStatusToMainControl();
+				}
+				if(waitingIn == CarAgent.NORTH) {
+					myAgent.send(leftTurn);
+					innerQueues.get(waitingIn).poll();
+					leftTurn = null;
+					waitingIn = null;
+				}
+			}
+			
+		});
+		// East traffic
+		addBehaviour(new CyclicBehaviour() {
+
+			@Override
+			public void action() {
+				if (semaphoreEast == GREEN 
+						&& !isSemaphoreEmpty(CarAgent.EAST) && isInnerQueueAvailable(CarAgent.EAST)) {
+					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.EAST));
+					ACLMessage reply = queues.get(CarAgent.EAST).poll();
+					addToInnerDirectionQueue(CarAgent.EAST, reply);
+					reply.setPerformative(ACLMessage.CONFIRM);
+					myAgent.send(reply);
+					sendStatusToMainControl();
+				}
+				if(waitingIn == CarAgent.NORTH) {
+					myAgent.send(leftTurn);
+					innerQueues.get(waitingIn).poll();
+					leftTurn = null;
+					waitingIn = null;
+				}
+			}
+			
+		});
 	}
 	
 	private void switchColor () {
@@ -154,13 +249,15 @@ public class CrossRoadAgent extends Agent {
 		
 	}
 	
+	
+	
 	private class CrossroadControlBehaviour extends CyclicBehaviour {
 
 		@Override
 		public void action() {
 			ACLMessage msg = myAgent.receive();
 			if (msg != null) {
-				System.out.println("[XROAD] received: " + msg.getContent() + " from " + msg.getSender());
+				//System.out.println("[XROAD] received: " + msg.getContent() + " from " + msg.getSender().getLocalName());
 				ACLMessage reply = msg.createReply();
 				AID sender = msg.getSender();
 				if (msg.getPerformative() == ACLMessage.REQUEST) {
@@ -207,26 +304,46 @@ public class CrossRoadAgent extends Agent {
 							// turning left TODO
 							debugLog(sender, " Going left");
 //							check oppsite inner queue
-//							prepare message go = ked uz tam nejaka je tak tu pustime 
+							Integer opposite = getOppositeDirection(src);
 							reply.setPerformative(ACLMessage.CONFIRM);
-							myAgent.send(reply);
-							debugLog(sender, "Removed from inner queue");
-							innerQueues.get(src).poll();
+							// something is going in oposite direction
+							if (!isInnerQueueForDirectionEmpty(opposite)) {
+//								if someone is waiting to turn left pull him too
+								if (leftTurn != null) {
+									myAgent.send(reply);
+									debugLog(sender, "Removed from inner queue");
+									innerQueues.get(src).poll();
+									myAgent.send(leftTurn);
+									debugLog("Removed opposite from inner queue");
+									innerQueues.get(opposite).poll();
+									leftTurn = null;
+									waitingIn = null;
+								} else {
+									// wait till someone pull you out
+									leftTurn = reply;
+									waitingIn = src;
+								}
+							} else {
+								// free to go
+								myAgent.send(reply);
+								debugLog(sender, "Removed from inner queue");
+								innerQueues.get(src).poll();
+							}
 						}
 					}
+					sendStatusToMainControl();
 				}
 				else { // DEBUG branch
-					System.out.println("XROAD received smth else then request: " + msg.getContent());
+					//System.out.println("XROAD received smth else then request: " + msg.getContent());
 				}
 			}
 			
 			
 			// Standard crossroad control
-			simulateCrossroad();		
+			//simulateCrossroad();		
 			
-			sendStatusToMainControl();
 		}
-		
+
 		private void simulateCrossroad() {
 			
 			if ( semaphoreNorth == GREEN ) {
@@ -251,6 +368,14 @@ public class CrossRoadAgent extends Agent {
 			}
 		}
 		
+	}
+	
+	private Integer getOppositeDirection(Integer src) {
+		if(src < 2) {
+			return src == CarAgent.NORTH ? CarAgent.SOUTH : CarAgent.NORTH;
+		} else {
+			return src == CarAgent.EAST ? CarAgent.WEST : CarAgent.EAST;
+		}
 	}
 	
 	private void sendStatusToMainControl() {
@@ -287,7 +412,7 @@ public class CrossRoadAgent extends Agent {
 	}
 	
 	void debugLog(AID aid, String msg) {
-		System.out.println("[XROAD] " + aid + ":" + msg);
+		System.out.println("[XROAD] " + aid.getLocalName() + ":" + msg);
 	}
 	
 	void debugLog(String msg) {

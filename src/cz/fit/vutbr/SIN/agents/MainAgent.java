@@ -65,6 +65,8 @@ public class MainAgent extends Agent {
 				ACLMessage msg = myAgent.receive(mt);
 				if (msg != null) {
 					//System.out.println("MainAgent: message recieved");
+					if(!msg.getContent().contains("UPDATE_Q"))
+						System.out.println("debug:MainAgent: "+msg.getContent());
 					String[] content = msg.getContent().split(" ");
 					if (content[0].equals("STATUS")) {
 						events.add(content[1].replaceAll("_", " "));
@@ -130,8 +132,12 @@ public class MainAgent extends Agent {
 						cal.getTime();
 						SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 						events.add("MainAgent "+sdf.format(cal.getTime())+" :"+prefix+"#"+n+" dispatched\n");
+						gui.appendEvents(events);
+						events.clear();
 					} catch (StaleProxyException e) {
 						events.add("MainAgent: mhd car "+prefix+"#"+n+"failed to dispatch\n");
+						gui.appendEvents(events);
+						events.clear();
 						e.printStackTrace();
 					}
 				}
