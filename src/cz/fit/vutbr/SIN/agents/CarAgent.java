@@ -30,6 +30,8 @@ public class CarAgent extends Agent {
 	private Integer destination;
 	private AID crossroadControlService;
 	private AID guiService;
+	
+	private long creationTime;
 
 	protected void setup() {
 				
@@ -37,6 +39,7 @@ public class CarAgent extends Agent {
 		destination = Integer.parseInt((String) this.getArguments()[1]);
 		
 		state = CarState.BEFORE_SEMAPHORE;
+		creationTime = System.currentTimeMillis();
 		
 		// Get CrossRoad control service
 		getService("crossroad-control");
@@ -44,21 +47,28 @@ public class CarAgent extends Agent {
 		// Get gui service
 		getService("main-control");
 		
-		// Periodically send statistics
-		addBehaviour(new TickerBehaviour(this, 5000){
+		//Testing behaviour
+		/*addBehaviour(new TickerBehaviour(this,1500) {
 
 			@Override
 			protected void onTick() {
-				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.addReceiver(guiService);
-				msg.setContent("STATUS "+myAgent.getLocalName()+":"+state+"\n");
-				send(msg);
+				nextState();
+				
 			}
 			
 		});
+		*/
+		addBehaviour(new RoutingBehaviour());
 		
-		//addBehaviour(new RoutingBehaviour());
-		
+	}
+	
+	// Testing method
+	public void nextState() {
+		if(state == CarState.BEFORE_SEMAPHORE) {
+			state = CarState.IN_CROSSROAD;
+		} else if (state == CarState.IN_CROSSROAD) {
+			state = CarState.OVER_CROSSROAD;
+		}
 	}
 	
 	private void getService( String serviceType) {
@@ -81,9 +91,58 @@ public class CarAgent extends Agent {
 		
 	}
 	
+	private class StatusChangeBehaviour extends Behaviour {
+		
+		private long waitTime;
+		
+		public StatusChangeBehaviour(long waitTime) {
+			super();
+			this.waitTime = waitTime;
+		}
+
+		@Override
+		public void action() {
+			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+			msg.addReceiver(guiService);
+			switch(state) {
+				case BEFORE_SEMAPHORE:
+					msg.setContent("STATUS "+myAgent.getLocalName()
+							+":_"+source+"->"+destination
+							+"_"+state+"\n");
+					break;
+				case IN_CROSSROAD:
+					msg.setContent("STATUS "+myAgent.getLocalName()
+							+":_"+source+"->"+destination
+							+"_"+state
+							+"_waited:"+waitTime+"s\n");
+					break;
+				case OVER_CROSSROAD:
+					msg.setContent("STATUS "+myAgent.getLocalName()
+							+":_"+source+"->"+destination
+							+"_"+state
+							+"_lived:"+waitTime+"s\n");
+					break;
+			}
+			
+			send(msg);
+			
+		}
+
+		@Override
+		public boolean done() {
+			// TODO Auto-generated method stub
+			return true;
+		}
+		
+	}
+	
 	private class RoutingBehaviour extends Behaviour {
 		
 		private boolean messageSent = false;
+		// Testing purpose
+		//private CarState inState = state;
+		
+		private long startWait;
 		
 		private MessageTemplate mt;
 
@@ -98,8 +157,11 @@ public class CarAgent extends Agent {
 							if (reply.getPerformative() == ACLMessage.INFORM) {
 								messageSent = false;
 							}
+						} else {
+							block();
 						}
 					} else {
+						myAgent.addBehaviour(new StatusChangeBehaviour(0));
 						// Send request about semaphore light
 						ACLMessage req = new ACLMessage(ACLMessage.REQUEST);
 						req.addReceiver(crossroadControlService);
@@ -108,35 +170,47 @@ public class CarAgent extends Agent {
 						// Unique value - also inform about public transport
 						req.setReplyWith("REQ-"+myAgent.getLocalName()+"-"+System.currentTimeMillis());
 						myAgent.send(req);
-						messageSent = true;
 						// Prepare the template to get proposals
 						mt = MessageTemplate.and(MessageTemplate.MatchConversationId("semaphore-state"),
 								MessageTemplate.MatchInReplyTo(req.getReplyWith()));
+						startWait = System.currentTimeMillis();
+						messageSent = true;
 					}
 					break;
 				case IN_CROSSROAD:
+					/*if(inState != state) {
+						messageSent = false;
+						inState = state;
+					}*/
 					// tell about your intentions and wait for confirmation`
 					if(messageSent) {
 						ACLMessage reply = myAgent.receive(mt);
 						if (reply != null) {
 							if(reply.getPerformative() == ACLMessage.CONFIRM) {
 								state = CarState.OVER_CROSSROAD;
+								messageSent = false;
 							}
+						} else {
+							block();
 						}
 					} else {
+						long totalWait = (System.currentTimeMillis()-startWait)/1000;
+						myAgent.addBehaviour(new StatusChangeBehaviour(totalWait));
 						ACLMessage query = new ACLMessage(ACLMessage.REQUEST);
 						query.addReceiver(crossroadControlService);
 						query.setContent("IN_CR "+source+" "+destination);
 						query.setConversationId("in-crossroad-decision");
 						query.setReplyWith("QUERY-"+myAgent.getLocalName()+"-"+System.currentTimeMillis());
 						myAgent.send(query);
-						messageSent = true;
 						mt = MessageTemplate.and(MessageTemplate.MatchConversationId("in-crossroad-decision"),
 								MessageTemplate.MatchInReplyTo(query.getReplyWith()));
+						messageSent = true;
 					}
 					break;
 				default:
 					state = CarState.OVER_CROSSROAD;
+					long totalTime = (System.currentTimeMillis()-creationTime)/1000;
+					myAgent.addBehaviour(new StatusChangeBehaviour(totalTime));
 			}
 		}
 

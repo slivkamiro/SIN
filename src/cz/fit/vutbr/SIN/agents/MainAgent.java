@@ -5,7 +5,7 @@ import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -16,7 +16,9 @@ import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import cz.fit.vutbr.SIN.gui.MainWindow;
@@ -65,7 +67,7 @@ public class MainAgent extends Agent {
 					//System.out.println("MainAgent: message recieved");
 					String[] content = msg.getContent().split(" ");
 					if (content[0].equals("STATUS")) {
-						events.add(content[1]);
+						events.add(content[1].replaceAll("_", " "));
 						gui.appendEvents(events);
 						events.clear();
 					} else if (content[0].equals("SEM_SWITCH")) {
@@ -78,6 +80,8 @@ public class MainAgent extends Agent {
 					} else if (content[0].equals("CAR_DIRECT")) {
 						gui.setArrowOnTo(Integer.parseInt(content[1]), Integer.parseInt(content[2]));
 					}
+				} else {
+					block();
 				}
 				
 			}
@@ -98,35 +102,42 @@ public class MainAgent extends Agent {
 	}
 
 	public void spawnCars(int num) {
-		spawnCars(num,"");
+		spawnCars(num,"Car");
 	}
 
 	public void spawnCars(final int num, final String prefix) {
-		addBehaviour(new OneShotBehaviour() {
-
-			@Override
-			public void action() {
-				for(int i = 0; i < num; i++) {
+		for(int i = 0; i < num; i++) {
+			final Integer n = new Integer(i);
+			addBehaviour(new WakerBehaviour(this, (long) (Math.random()*50000+1)) {
+	
+				@Override
+				public void onWake() {
 					try {						
-//						String[] direction = { myAgent.getAID().getLocalName(),
-//												(int) (Math.random()*4+1)+"",
-//												(int) (Math.random()*4+1)+""
-//												};		
+	//						String[] direction = { myAgent.getAID().getLocalName(),
+	//												(int) (Math.random()*4+1)+"",
+	//												(int) (Math.random()*4+1)+""
+	//												};		
 						// DEBUG - NORT SOUTH should be green initialy
-						String[] direction = { (int) (Math.random()*2+1)+"",
-								(int) (Math.random()*4+1)+""
-								};			
-						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+i, CarAgent.class.getCanonicalName(), direction);
+						int src = (int) (Math.random()*2);
+						int dst = (int) (Math.random()*3);
+						if (dst == src) {
+							dst = dst == 3 ? dst-1 : dst+1;
+						}
+						String[] direction = { src+"", dst+"" };			
+						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+n, CarAgent.class.getCanonicalName(), direction);
 						agent.start();
-						events.add("MainAgent: car "+prefix+"#"+i+"dispatched\n");
+						Calendar cal = Calendar.getInstance();
+						cal.getTime();
+						SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+						events.add("MainAgent "+sdf.format(cal.getTime())+" :"+prefix+"#"+n+" dispatched\n");
 					} catch (StaleProxyException e) {
-						events.add("MainAgent: mhd car "+prefix+"#"+i+"failed to dispatch\n");
+						events.add("MainAgent: mhd car "+prefix+"#"+n+"failed to dispatch\n");
 						e.printStackTrace();
 					}
 				}
-			}
-			
-		});
+				
+			});
+		}
 		
 		
 	}
