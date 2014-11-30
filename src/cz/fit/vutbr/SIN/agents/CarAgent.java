@@ -29,29 +29,29 @@ public class CarAgent extends Agent {
 	private Integer source;
 	private Integer destination;
 	private AID crossroadControlService;
-	private AID mainControlService;
+	private AID guiService;
 
 	protected void setup() {
-		
-		final String mainAgentID = (String) this.getArguments()[0];
-		System.out.println(getAID().getLocalName()+" agent know about "+mainAgentID);
-		
-		source = Integer.parseInt((String) this.getArguments()[1]);
-		destination = Integer.parseInt((String) this.getArguments()[2]);
+				
+		source = Integer.parseInt((String) this.getArguments()[0]);
+		destination = Integer.parseInt((String) this.getArguments()[1]);
 		
 		state = CarState.BEFORE_SEMAPHORE;
 		
 		// Get CrossRoad control service
 		getService("crossroad-control");
 		
+		// Get gui service
+		getService("main-control");
+		
 		// Periodically send statistics
-		addBehaviour(new TickerBehaviour(this, 1000){
+		addBehaviour(new TickerBehaviour(this, 5000){
 
 			@Override
 			protected void onTick() {
 				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.addReceiver(new AID(mainAgentID,AID.ISLOCALNAME));
-				msg.setContent(myAgent.getLocalName()+": "+state+"\n");
+				msg.addReceiver(guiService);
+				msg.setContent("STATUS "+myAgent.getLocalName()+":"+state+"\n");
 				send(msg);
 			}
 			
@@ -69,6 +69,9 @@ public class CarAgent extends Agent {
 		template.addServices(sd);
 		try {
 			DFAgentDescription[] result = DFService.search(this, template);
+			if (serviceType.equals("main-control"))
+				guiService = result[0].getName();
+			else
 				crossroadControlService = result[0].getName();
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
@@ -145,4 +148,3 @@ public class CarAgent extends Agent {
 	}
 	
 }
->>>>>>> master
