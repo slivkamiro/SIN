@@ -51,6 +51,15 @@ public class CrossRoadAgent extends Agent {
 	
 	private AID mainControlService;
 
+	// direction where MHD was spotted - no mhd == -1
+	Integer mhdAppearance = -1;
+	
+	// default semaphore timeout
+	long semTimeout = 5000;
+	
+    // time since last color switch
+	long lastSwitchTime = System.currentTimeMillis();
+	
 	protected void setup() {
 		
 		initQueues();
@@ -76,16 +85,33 @@ public class CrossRoadAgent extends Agent {
 		getService("main-control");
 		
 		// Periodically send statistics
-		addBehaviour(new TickerBehaviour(this, 15000){
+		addBehaviour(new CyclicBehaviour(){
 
 			@Override
-			protected void onTick() {
-				switchColor();
+			public void action() {
+				long currentTime = System.currentTimeMillis();
+				if (currentTime - lastSwitchTime >= semTimeout){
+					switchColor();
+				}
 			}
 			
 		});
 				
 		addBehaviour(new CrossroadControlBehaviour());
+
+		// mhd handler
+		addBehaviour(new CyclicBehaviour() {
+			@Override
+			public void action() {
+				if (mhdAppearance >= 0){
+					if (getLightOf(mhdAppearance) != GREEN){
+						switchColor();
+						mhdAppearance = -1;
+					}
+				}
+			}
+		});
+
 		
 		// North traffic
 		addBehaviour(new CyclicBehaviour() {
@@ -184,6 +210,15 @@ public class CrossRoadAgent extends Agent {
 			}
 			
 		});
+		
+		// status reporting to MainAgent
+		addBehaviour(new CyclicBehaviour() {
+
+			@Override
+			public void action() {
+				sendStatusToMainControl();
+			}
+		});
 	}
 	
 	private void switchColor () {
@@ -197,6 +232,9 @@ public class CrossRoadAgent extends Agent {
 		msg.setContent("SEM_SWITCH");
 		send(msg);
 		
+		// update last switch time
+		lastSwitchTime = System.currentTimeMillis();
+	
 		// DEBUG
 		if (semaphoreNorth == GREEN){
 			System.out.println("[XROAD] SOUTH-NORTH opened");
@@ -269,6 +307,10 @@ public class CrossRoadAgent extends Agent {
 						// Get semaphore light
 						Integer s = Integer.parseInt(msgContent[1]);
 						Integer semLight = getLightOf(s);
+						if (sender.getLocalName().contains("MHD")){
+							   // handle MHD appearance
+							   mhdAppearance = s;
+							}
 						if (semLight == RED) {
 							debugLog(sender, "Added to queue");
 							addToSemaphoreQueue(s, reply);
@@ -333,7 +375,6 @@ public class CrossRoadAgent extends Agent {
 							}
 						}
 					}
-					sendStatusToMainControl();
 				}
 				else { // DEBUG branch
 					//System.out.println("XROAD received smth else then request: " + msg.getContent());
@@ -345,32 +386,8 @@ public class CrossRoadAgent extends Agent {
 			//simulateCrossroad();		
 			
 		}
-
-		private void simulateCrossroad() {
-			
-			if ( semaphoreNorth == GREEN ) {
-				// NORTH - SOUTH open
-				simulate(CarAgent.NORTH);
-				simulate(CarAgent.SOUTH);
-			}
-			else {
-				// EAST - WEST open
-				simulate(CarAgent.EAST);
-				simulate(CarAgent.WEST);
-			}
-		}
 		
-		private void simulate(Integer s) {
-			if (!isSemaphoreEmpty(s) && isInnerQueueAvailable(s)) {
-				debugLog(" Adding car to inner queue from direction " +  dirToStr(s));
-				ACLMessage reply = queues.get(s).poll();
-				addToInnerDirectionQueue(s, reply);
-				reply.setPerformative(ACLMessage.CONFIRM);
-				myAgent.send(reply);
-			}
-		}
-		
-	}
+	}// CrossRoadControlBehaviour
 	
 	private Integer getOppositeDirection(Integer src) {
 		if(src < 2) {
