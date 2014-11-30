@@ -20,10 +20,10 @@ public class CarAgent extends Agent {
 	}
 	
 	// Directions
-	public static final Integer NORTH = 1;
-	public static final Integer SOUTH = 2;
-	public static final Integer WEST = 3;
-	public static final Integer EAST = 4;
+	public static final Integer NORTH = 0;
+	public static final Integer SOUTH = 1;
+	public static final Integer WEST = 2;
+	public static final Integer EAST = 3;
 	
 	private CarState state;
 	private Integer source;
@@ -72,7 +72,7 @@ public class CarAgent extends Agent {
 			if (serviceType.equals("main-control"))
 				guiService = result[0].getName();
 			else
-				crossroadControlService = result[0].getName();
+				throw new Exception();
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
 		} catch (Exception e) {
