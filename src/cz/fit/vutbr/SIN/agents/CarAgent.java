@@ -16,7 +16,8 @@ public class CarAgent extends Agent {
 	public enum CarState {
 		BEFORE_SEMAPHORE,
 		IN_CROSSROAD,
-		OVER_CROSSROAD
+		OVER_CROSSROAD,
+		INTERMEZZO
 	}
 	
 	// Directions
@@ -154,8 +155,9 @@ public class CarAgent extends Agent {
 						ACLMessage reply = myAgent.receive(mt);
 						if(reply != null) {
 							// CrossroadControlService inform about semaphore light
-							if (reply.getPerformative() == ACLMessage.INFORM) {
+							if (reply.getPerformative() == ACLMessage.CONFIRM) {
 								messageSent = false;
+								state = CarState.IN_CROSSROAD;
 							}
 						} else {
 							block();
@@ -187,7 +189,7 @@ public class CarAgent extends Agent {
 						ACLMessage reply = myAgent.receive(mt);
 						if (reply != null) {
 							if(reply.getPerformative() == ACLMessage.CONFIRM) {
-								state = CarState.OVER_CROSSROAD;
+								state = CarState.INTERMEZZO;
 								messageSent = false;
 							}
 						} else {

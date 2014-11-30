@@ -110,8 +110,7 @@ public class CrossRoadAgent extends Agent {
 	}
 	
 	private void initQueues() {
-		// Queues on semaphores - TODO: refator semaphores to array, remake
-		// direction constant in car agent to enum and simplify semaph. methods
+		// Queues on semaphores
 		qN = new java.util.LinkedList<ACLMessage>();
 		qS = new java.util.LinkedList<ACLMessage>();
 		qE = new java.util.LinkedList<ACLMessage>();
@@ -161,10 +160,10 @@ public class CrossRoadAgent extends Agent {
 		public void action() {
 			ACLMessage msg = myAgent.receive();
 			if (msg != null) {
+				System.out.println("[XROAD] received: " + msg.getContent() + " from " + msg.getSender());
 				ACLMessage reply = msg.createReply();
 				AID sender = msg.getSender();
 				if (msg.getPerformative() == ACLMessage.REQUEST) {
-					System.out.println("request received");
 					// Parse request
 					String[] msgContent = msg.getContent().split(" ");
 					if (msgContent[0].equals("GET_SEM")) {
@@ -175,81 +174,102 @@ public class CrossRoadAgent extends Agent {
 							debugLog(sender, "Added to queue");
 							addToSemaphoreQueue(s, reply);
 						} else {
-							// check inner state of crossroad
-							if (!isSemaphoreEmpty(s) || !isInnerQueueForDirectionEmpty(s)) {
+							// GREEN
+							if (!isSemaphoreEmpty(s) || !isInnerQueueAvailable(s)) {
 								debugLog(sender, "Added to queue");
 								addToSemaphoreQueue(s, reply);
 							}
 							else {
-								//TODO: we dont care what is in inner queue - we only need to know its full
+								// queue is empty, and inner queue has free capacity
+								//TODO: we dont care what is in inner queue - we only need to know if it's full
 								debugLog(sender, "Moved to inner queue");
-								ACLMessage tmp = queues.get(s).poll();
-								addToInnerDirectionQueue(s, tmp);
+								addToInnerDirectionQueue(s, reply);
 								reply.setPerformative(ACLMessage.CONFIRM);
 								myAgent.send(reply);						
 							}							
 						}
 					}
 					else if (msgContent[0].equals("IN_CR")) {
+						// TODO match car from inner queue to sender, we are serving only if it is head of queue
 						Integer src = Integer.parseInt(msgContent[1]);
 						Integer dst = Integer.parseInt(msgContent[2]);
+						
 						debugLog(sender, dirToStr(src)+" -> "+dirToStr(dst)+ " entered inner queue");
+						sendToMainControl("CAR_DIRECT" + dst);
+						
 						if (isDstForward(src,dst) || isDstRight(src,dst)) {
 							reply.setPerformative(ACLMessage.CONFIRM);
 							myAgent.send(reply);
-							// remove from inner front
 							debugLog(sender, "Removed from inner queue");
 							innerQueues.get(src).poll();
 						}
-						else { // turning left
-							debugLog(sender, " going left");
+						else { 
+							// turning left TODO
+							debugLog(sender, " Going left");
 //							check oppsite inner queue
 //							prepare message go = ked uz tam nejaka je tak tu pustime 
 							reply.setPerformative(ACLMessage.CONFIRM);
 							myAgent.send(reply);
-							// remove from inner front
 							debugLog(sender, "Removed from inner queue");
 							innerQueues.get(src).poll();
 						}
 					}
 				}
 				else { // DEBUG branch
-					System.out.println("XROAD received not a request: " + msg.getContent());
+					System.out.println("XROAD received smth else then request: " + msg.getContent());
 				}
 			}
 			
 			
-			// Standard crossroad controll
-			simulateCrossroad();	
+			// Standard crossroad control
+			simulateCrossroad();		
 			
+			sendStatusToMainControl();
+		}
+		
+		private void simulateCrossroad() {
 			
+			if ( semaphoreNorth == GREEN ) {
+				// NORTH - SOUTH open
+				simulate(CarAgent.NORTH);
+				simulate(CarAgent.SOUTH);
+			}
+			else {
+				// EAST - WEST open
+				simulate(CarAgent.EAST);
+				simulate(CarAgent.WEST);
+			}
+		}
+		
+		private void simulate(Integer s) {
+			if (!isSemaphoreEmpty(s) && isInnerQueueAvailable(s)) {
+				debugLog(" Adding car to inner queue from direction " +  dirToStr(s));
+				ACLMessage reply = queues.get(s).poll();
+				addToInnerDirectionQueue(s, reply);
+				reply.setPerformative(ACLMessage.CONFIRM);
+				myAgent.send(reply);
+			}
 		}
 		
 	}
 	
-	private void simulateCrossroad() {
-	
-		if ( semaphoreNorth == GREEN ) {
-			// NORTH - SOUTH open
-			simulate(CarAgent.NORTH);
-			simulate(CarAgent.SOUTH);
-		}
-		else {
-			// EAST - WEST open
-			simulate(CarAgent.EAST);
-			simulate(CarAgent.WEST);
-		}
+	private void sendStatusToMainControl() {
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.addReceiver(mainControlService);
+		String content = "UPDATE_Q "
+				+ queues.get(CarAgent.NORTH).size() + " "
+				+ queues.get(CarAgent.SOUTH).size() + " "
+				+ queues.get(CarAgent.WEST).size() + " "
+				+ queues.get(CarAgent.EAST).size();
+		msg.setContent(content);
+		send(msg);
 	}
 	
-	private void simulate(Integer s) {
-		if (!isSemaphoreEmpty(s) && isInnerQueueAvailable(s)) {
-			debugLog(" Adding car to inner queue from direction " +  dirToStr(s));
-			//addToSemaphoreQueue(s, reply);
-		}
-	}
-	
-	private boolean isInnerQueueAvailable(Integer s) {
-		return innerQueues.get(s).size() <= CAPACITY;
+	private void sendToMainControl(String str) {
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.addReceiver(mainControlService);
+		msg.setContent(str);
+		send(msg);
 	}
 	
 	private String dirToStr(Integer s) {
@@ -295,60 +315,25 @@ public class CrossRoadAgent extends Agent {
 	}
 	
 	private boolean isSemaphoreEmpty(Integer s) {
-//		if ( s == CarAgent.NORTH ) {
-//			return qN.isEmpty();
-//		} else if (s == CarAgent.SOUTH) {
-//			return qS.isEmpty();
-//		} else if (s == CarAgent.WEST) {
-//			return qW.isEmpty();
-//		} else if (s == CarAgent.EAST) {
-//			return qE.isEmpty();
-//		}		
-		
 		return queues.get(s).isEmpty();
 	}
 	
 	private void addToSemaphoreQueue(Integer s, ACLMessage reply) {
-//		if ( s == CarAgent.NORTH ) {
-//			qN.add(reply);
-//		} else if (s == CarAgent.SOUTH) {
-//			qS.add(reply);
-//		} else if (s == CarAgent.WEST) {
-//			qW.add(reply);
-//		} else if (s == CarAgent.EAST) {
-//			qE.add(reply);
-//		}
-		
 		queues.get(s).add(reply);
 	}
 	
 	private boolean isInnerQueueForDirectionEmpty(Integer s) {
-//		if ( s == CarAgent.NORTH ) {
-//			return qNin.isEmpty();
-//		} else if (s == CarAgent.SOUTH) {
-//			return qSin.isEmpty();
-//		} else if (s == CarAgent.WEST) {
-//			return qWin.isEmpty();
-//		} else if (s == CarAgent.EAST) {
-//			return qEin.isEmpty();
-//		}		
-
-		return innerQueues.get(s).isEmpty();	
+	return innerQueues.get(s).isEmpty();	
 	}
 	
 	private void addToInnerDirectionQueue(Integer s, ACLMessage reply){
-//		if ( s == CarAgent.NORTH ) {
-//			qNin.add(reply);
-//		} else if (s == CarAgent.SOUTH) {
-//			qSin.add(reply);
-//		} else if (s == CarAgent.WEST) {
-//			qWin.add(reply);
-//		} else if (s == CarAgent.EAST) {
-//			qEin.add(reply);
-//		}
-
 		innerQueues.get(s).add(reply);	
 
+	}
+	
+	private boolean isInnerQueueAvailable(Integer s) {
+		//System.out.println("[XROAD] Used capacity of inner " +s+ ": " + innerQueues.get(s).size());
+		return innerQueues.get(s).size() < CAPACITY;
 	}
 	
 	private Integer getLightOf(Integer s) {
