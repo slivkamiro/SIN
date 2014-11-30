@@ -195,7 +195,7 @@ public class CrossRoadAgent extends Agent {
 						Integer dst = Integer.parseInt(msgContent[2]);
 						
 						debugLog(sender, dirToStr(src)+" -> "+dirToStr(dst)+ " entered inner queue");
-						sendToMainControl("CAR_DIRECT" + dst);
+						sendToMainControl("CAR_DIRECT " + src+" "+dst);
 						
 						if (isDstForward(src,dst) || isDstRight(src,dst)) {
 							reply.setPerformative(ACLMessage.CONFIRM);
