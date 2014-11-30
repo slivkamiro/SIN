@@ -13,6 +13,7 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.util.leap.ArrayList;
 import jade.util.leap.LinkedList;
 
 public class CrossRoadAgent extends Agent {
@@ -38,8 +39,8 @@ public class CrossRoadAgent extends Agent {
 	private Queue<ACLMessage> qEin;
 	private Queue<ACLMessage> qWin;
 	
-	private EnumMap<CarAgent.Direction, Queue<ACLMessage>> queues;
-	private EnumMap<CarAgent.Direction, Queue<ACLMessage>> innerQueues;
+	private List<Queue<ACLMessage>> queues;
+	private List< Queue<ACLMessage>> innerQueues;
 	
 	// These flags says if there is something in crossroad in two directions
 	private boolean centerFull = false;
@@ -82,11 +83,11 @@ public class CrossRoadAgent extends Agent {
 		qE = new java.util.LinkedList<ACLMessage>();
 		qW = new java.util.LinkedList<ACLMessage>();
 		
-		queues =  new EnumMap<CarAgent.Direction, Queue<ACLMessage>>(CarAgent.Direction.class);
-		queues.put(CarAgent.Direction.NORTH, qN);
-		queues.put(CarAgent.Direction.SOUTH, qS);
-		queues.put(CarAgent.Direction.EAST, qE);
-		queues.put(CarAgent.Direction.WEST, qW);
+		queues =  new java.util.ArrayList<Queue<ACLMessage>>();
+		queues.add(qN);
+		queues.add(qS);
+		queues.add(qE);
+		queues.add(qW);
 		
 		// inner crossroad queues by direction ( for now there is only one lane for direction)
 		qNin = new java.util.LinkedList<ACLMessage>();
@@ -94,11 +95,11 @@ public class CrossRoadAgent extends Agent {
 		qEin = new java.util.LinkedList<ACLMessage>();
 		qWin = new java.util.LinkedList<ACLMessage>();
 	
-		innerQueues =  new EnumMap<CarAgent.Direction, Queue<ACLMessage>>(CarAgent.Direction.class);
-		queues.put(CarAgent.Direction.NORTH, qNin);
-		queues.put(CarAgent.Direction.SOUTH, qSin);
-		queues.put(CarAgent.Direction.EAST, qEin);
-		queues.put(CarAgent.Direction.WEST, qWin);
+		innerQueues =  new java.util.ArrayList<Queue<ACLMessage>>();
+		queues.add(qNin);
+		queues.add(qSin);
+		queues.add(qEin);
+		queues.add(qWin);
 
 	}
 	
