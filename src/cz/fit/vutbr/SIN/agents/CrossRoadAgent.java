@@ -8,6 +8,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -25,6 +26,8 @@ public class CrossRoadAgent extends Agent {
 	private int semaphoreSouth = GREEN;
 	private int semaphoreEast = RED;
 	private int semaphoreWest = RED;
+	
+	private int CAPACITY = 1;
 	
 	// Queues on semaphores - TODO: refator semaphores to array, remake
 	// direction constant in car agent to enum and simplify semaph. methods
@@ -71,8 +74,38 @@ public class CrossRoadAgent extends Agent {
 		
 		// Get  services
 		getService("main-control");
+		
+		// Periodically send statistics
+		addBehaviour(new TickerBehaviour(this, 5000){
+
+			@Override
+			protected void onTick() {
+				switchColor();
+			}
+			
+		});
 				
 		addBehaviour(new CrossroadControlBehaviour());
+	}
+	
+	private void switchColor () {
+		semaphoreNorth =  (semaphoreNorth == RED) ? GREEN : RED;
+		semaphoreSouth =  (semaphoreSouth == RED) ? GREEN : RED;
+		semaphoreWest  =  (semaphoreWest == RED) ? GREEN : RED;
+		semaphoreEast  =  (semaphoreEast == RED) ? GREEN : RED;
+	
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.addReceiver(mainControlService);
+		msg.setContent("SEM_SWITCH");
+		send(msg);
+		
+		// DEBUG
+		if (semaphoreNorth == RED){
+			System.out.println("[XROAD] SOUTH-NORTH opened");
+		}
+		else {
+			System.out.println("[XROAD] EAST-WEST opened");
+		}
 	}
 	
 	private void initQueues() {
@@ -96,10 +129,10 @@ public class CrossRoadAgent extends Agent {
 		qWin = new java.util.LinkedList<ACLMessage>();
 	
 		innerQueues =  new java.util.ArrayList<Queue<ACLMessage>>();
-		queues.add(qNin);
-		queues.add(qSin);
-		queues.add(qEin);
-		queues.add(qWin);
+		innerQueues.add(qNin);
+		innerQueues.add(qSin);
+		innerQueues.add(qEin);
+		innerQueues.add(qWin);
 
 	}
 	
@@ -128,7 +161,9 @@ public class CrossRoadAgent extends Agent {
 			ACLMessage msg = myAgent.receive();
 			if (msg != null) {
 				ACLMessage reply = msg.createReply();
+				AID sender = msg.getSender();
 				if (msg.getPerformative() == ACLMessage.REQUEST) {
+					System.out.println("request received");
 					// Parse request
 					String[] msgContent = msg.getContent().split(" ");
 					if (msgContent[0].equals("GET_SEM")) {
@@ -136,34 +171,126 @@ public class CrossRoadAgent extends Agent {
 						Integer s = Integer.parseInt(msgContent[1]);
 						Integer semLight = getLightOf(s);
 						if (semLight == RED) {
+							debugLog(sender, "Added to queue");
 							addToSemaphoreQueue(s, reply);
 						} else {
 							// check inner state of crossroad
 							if (!isSemaphoreEmpty(s) || !isInnerQueueForDirectionEmpty(s)) {
+								debugLog(sender, "Added to queue");
 								addToSemaphoreQueue(s, reply);
 							}
 							else {
-								addToInnerDirectionQueue(s, reply);
+								//TODO: we dont care what is in inner queue - we only need to know its full
+								debugLog(sender, "Moved to inner queue");
+								ACLMessage tmp = queues.get(s).poll();
+								addToInnerDirectionQueue(s, tmp);
 								reply.setPerformative(ACLMessage.CONFIRM);
 								myAgent.send(reply);						
 							}							
 						}
 					}
-//					else if (msgContent[0].equals("IN_CR")) {
-//						if (msgContent[1].equals("IN_CR")
-//						if (dst == ROVNO || doprava) 
-//							reply GO
-//						else check oppsite inner queue
+					else if (msgContent[0].equals("IN_CR")) {
+						Integer src = Integer.parseInt(msgContent[1]);
+						Integer dst = Integer.parseInt(msgContent[2]);
+						debugLog(sender, dirToStr(src)+" -> "+dirToStr(dst)+ " entered inner queue");
+						if (isDstForward(src,dst) || isDstRight(src,dst)) {
+							reply.setPerformative(ACLMessage.CONFIRM);
+							myAgent.send(reply);
+							// remove from inner front
+							debugLog(sender, "Removed from inner queue");
+							innerQueues.get(src).poll();
+						}
+						else { // turning left
+							debugLog(sender, " going left");
+//							check oppsite inner queue
 //							prepare message go = ked uz tam nejaka je tak tu pustime 
-//					}
+							reply.setPerformative(ACLMessage.CONFIRM);
+							myAgent.send(reply);
+							// remove from inner front
+							debugLog(sender, "Removed from inner queue");
+							innerQueues.get(src).poll();
+						}
+					}
 				}
 				else { // DEBUG branch
 					System.out.println("XROAD received not a request: " + msg.getContent());
 				}
 			}
 			
+			
+			// Standard crossroad controll
+			simulateCrossroad();	
+			
+			
 		}
 		
+	}
+	
+	private simulateCrossroad() {
+	
+		if ( semaphoreNorth == GREEN ) {
+			// NORTH - SOUTH open
+			simulate(CarAgent.NORTH);
+			simulate(CarAgent.SOUTH);
+		}
+		else {
+			// EAST - WEST open
+			simulate(CarAgent.EAST);
+			simulate(CarAgent.WEST);
+		}
+	}
+	
+	private void simulate(Integer s) {
+		if (!isSemaphoreEmpty(s) && isInnerQueueAvailable(s)) {
+			debugLog(" Adding car to inner queue from direction " +  dirToStr(s));
+			addToSemaphoreQueue(s, reply);
+		}
+	}
+	
+	private boolean isInnerQueueAvailable(Integer s) {
+		return innerQueues.get(s).size() <= CAPACITY;
+	}
+	
+	private String dirToStr(Integer s) {
+		if ( s == CarAgent.NORTH ) {
+			return "NORTH";
+		} else if (s == CarAgent.SOUTH) {
+			return "SOUTH";
+		} else if (s == CarAgent.WEST) {
+			return "WEST";
+		} else if (s == CarAgent.EAST) {
+			return "EAST";
+		}
+		
+		return "UNKNOWN";
+	}
+	
+	void debugLog(AID aid, String msg) {
+		System.out.println("[XROAD] " + aid + ":" + msg);
+	}
+	
+	void debugLog(String msg) {
+		System.out.println("[XROAD]: " + msg);
+	}
+	
+	private boolean isDstForward(Integer src, Integer dst) {
+		if (src == CarAgent.NORTH && dst == CarAgent.SOUTH ||
+			src == CarAgent.SOUTH && dst == CarAgent.NORTH ||
+			src == CarAgent.WEST && dst == CarAgent.EAST ||
+			src == CarAgent.EAST && dst == CarAgent.WEST ) {
+				return true;
+			}
+			else { return false; }
+		}
+	
+	private boolean isDstRight(Integer src, Integer dst) {
+		if (src == CarAgent.NORTH && dst == CarAgent.WEST ||
+			src == CarAgent.SOUTH && dst == CarAgent.EAST ||
+			src == CarAgent.WEST && dst == CarAgent.SOUTH ||
+			src == CarAgent.EAST && dst == CarAgent.NORTH ) {
+			return true;
+		}
+		else { return false; }
 	}
 	
 	private boolean isSemaphoreEmpty(Integer s) {
