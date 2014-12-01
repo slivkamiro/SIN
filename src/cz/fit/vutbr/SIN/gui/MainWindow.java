@@ -128,7 +128,7 @@ public class MainWindow extends JFrame {
 		
 		eventsArea = new JTextArea();
 		eventsArea.setEditable(false);
-		eventsArea.setColumns(25);
+		eventsArea.setColumns(28);
 		scrollPane.setViewportView(eventsArea);
 		
 		crossroadPanel = new JPanel(){
@@ -321,7 +321,7 @@ public class MainWindow extends JFrame {
 	}
 
 	public void showGui() {
-		this.setSize(new Dimension(802,502));
+		this.setSize(new Dimension(842,512));
 		super.setVisible(true);
 		
 	}

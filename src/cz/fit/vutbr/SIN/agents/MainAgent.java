@@ -38,6 +38,8 @@ public class MainAgent extends Agent {
 	
 	private List<String> events;
 	
+	private int carCnt = 0;
+	
 	protected void setup() {
 		
 		gui = new MainWindow(this);
@@ -110,27 +112,22 @@ public class MainAgent extends Agent {
 	}
 
 	public void spawnCars(int num) {
-		spawnCars(num,"Car");
+		spawnCars(num,"CAR_");
 	}
 
 	public void spawnCars(final int num, final String prefix) {
-		for(int i = 0; i < num; i++) {
-			final Integer n = new Integer(i);
+		for(; carCnt < num; carCnt++) {
+			final Integer n = new Integer(carCnt);
 			addBehaviour(new WakerBehaviour(this, (long) (Math.random()*50000+1)) {
 	
 				@Override
 				public void onWake() {
 					try {						
-	//						String[] direction = { myAgent.getAID().getLocalName(),
-	//												(int) (Math.random()*4+1)+"",
-	//												(int) (Math.random()*4+1)+""
-	//												};		
-						// DEBUG - NORT SOUTH should be green initialy
 						int src = (int) (Math.random()*4);
 						int dst = (int) (Math.random()*4);
 
 						if (dst == src) {
-							dst = dst == 3 ? dst-1 : dst+1;
+							dst = (dst+1) % 4;
 						}
 						String[] direction = { src+"", dst+"" };			
 						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+n, CarAgent.class.getCanonicalName(), direction);
@@ -138,11 +135,11 @@ public class MainAgent extends Agent {
 						Calendar cal = Calendar.getInstance();
 						cal.getTime();
 						SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-						events.add("MainAgent "+sdf.format(cal.getTime())+" :"+prefix+"#"+n+" dispatched\n");
+						events.add(sdf.format(cal.getTime())+" :"+prefix+"#"+n+" dispatched\n");
 						gui.appendEvents(events);
 						events.clear();
 					} catch (StaleProxyException e) {
-						events.add("MainAgent: mhd car "+prefix+"#"+n+"failed to dispatch\n");
+						events.add(prefix+"#"+n+"failed to dispatch\n");
 						gui.appendEvents(events);
 						events.clear();
 						e.printStackTrace();

@@ -81,7 +81,6 @@ public class CrossRoadAgent extends Agent {
 		}
 		
 		// Get  service
-		try { Thread.sleep(3000); } catch (Exception e) {}
 		getService("main-control");
 		
 		// Periodically send statistics
@@ -280,6 +279,8 @@ public class CrossRoadAgent extends Agent {
 		template.addServices(sd);
 		try {
 			DFAgentDescription[] result = DFService.search(this, template);
+			while(result.length == 0)
+				result = DFService.search(this, template);
 			mainControlService = result[0].getName();
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
@@ -416,7 +417,7 @@ public class CrossRoadAgent extends Agent {
 		send(msg);
 	}
 	
-	private String dirToStr(Integer s) {
+	public static String dirToStr(Integer s) {
 		if ( s == CarAgent.NORTH ) {
 			return "NORTH";
 		} else if (s == CarAgent.SOUTH) {

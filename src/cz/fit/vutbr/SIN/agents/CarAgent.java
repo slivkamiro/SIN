@@ -144,7 +144,6 @@ public class CarAgent extends Agent {
 						long totalWait = (System.currentTimeMillis()-startWait)/1000;
 						sendStatusMessage(totalWait);
 						sendMessageToXRoadsControl("IN_CR "+source+" "+destination,"in-crossroad-decision");
-						try { Thread.sleep(1000); } catch (Exception e) {}
 					}
 					break;
 				default:
@@ -172,18 +171,18 @@ public class CarAgent extends Agent {
 			switch(state) {
 				case BEFORE_SEMAPHORE:
 					msg.setContent("STATUS "+myAgent.getLocalName()
-							+":_"+source+"->"+destination
+							+":_"+CrossRoadAgent.dirToStr(source)+"->"+CrossRoadAgent.dirToStr(destination)
 							+"_"+state+"\n");
 					break;
 				case IN_CROSSROAD:
 					msg.setContent("STATUS "+myAgent.getLocalName()
-							+":_"+source+"->"+destination
+							+":_"+CrossRoadAgent.dirToStr(source)+"->"+CrossRoadAgent.dirToStr(destination)
 							+"_"+state
 							+"_waited:"+waitTime+"s\n");
 					break;
 				case OVER_CROSSROAD:
 					msg.setContent("STATUS "+myAgent.getLocalName()
-							+":_"+source+"->"+destination
+							+":_"+CrossRoadAgent.dirToStr(source)+"->"+CrossRoadAgent.dirToStr(destination)
 							+"_"+state
 							+"_lived:"+waitTime+"s\n");
 					break;
