@@ -55,8 +55,8 @@ public class CrossRoadAgent extends Agent {
 	Integer mhdAppearance = -1;
 	
 	// default semaphore timeout
-	long semTimeout = 5000;
-	
+	long semTimeout = 15000;
+
     // time since last color switch
 	long lastSwitchTime = System.currentTimeMillis();
 	
@@ -338,6 +338,8 @@ public class CrossRoadAgent extends Agent {
 						
 						debugLog(sender, dirToStr(src)+" -> "+dirToStr(dst)+ " entered inner queue");
 						sendToMainControl("CAR_DIRECT " + src+" "+dst);
+						
+						try { Thread.sleep(1000); } catch (Exception e) {}
 						
 						if (isDstForward(src,dst) || isDstRight(src,dst)) {
 							reply.setPerformative(ACLMessage.CONFIRM);

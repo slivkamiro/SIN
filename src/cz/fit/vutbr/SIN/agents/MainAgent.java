@@ -1,8 +1,5 @@
 package cz.fit.vutbr.SIN.agents;
 
-import jade.content.lang.Codec.CodecException;
-import jade.content.onto.OntologyException;
-import jade.content.onto.basic.Action;
 import jade.core.Agent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
@@ -11,11 +8,8 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
-import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.JADEAgentManagement.JADEManagementOntology;
-import jade.domain.JADEAgentManagement.ShutdownPlatform;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentContainer;
@@ -31,25 +25,26 @@ import cz.fit.vutbr.SIN.gui.MainWindow;
 
 @SuppressWarnings("serial")
 public class MainAgent extends Agent {
-	
+
 	private MainWindow gui;
-	
+
 	private AgentContainer carAgentsContainer;
-	
+
 	private List<String> events;
-	
+
 	private int carCnt = 0;
-	
+
+	@Override
 	protected void setup() {
-		
+
 		gui = new MainWindow(this);
 		events = new ArrayList<String>();
-		
-		//crossRoadAgent = 
-		
+
+		//crossRoadAgent =
+
 		Profile p = new ProfileImpl();
 		carAgentsContainer = Runtime.instance().createAgentContainer(p);
-		
+
 		// Register the gui service in the yellow pages
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
@@ -63,7 +58,7 @@ public class MainAgent extends Agent {
 		catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
-		
+
 		addBehaviour(new CyclicBehaviour() {
 
 			@Override
@@ -73,8 +68,9 @@ public class MainAgent extends Agent {
 				ACLMessage msg = myAgent.receive(mt);
 				if (msg != null) {
 					//System.out.println("MainAgent: message recieved");
-					if(!msg.getContent().contains("UPDATE_Q"))
+					if(!msg.getContent().contains("UPDATE_Q")) {
 						System.out.println("debug:MainAgent: "+msg.getContent());
+					}
 					String[] content = msg.getContent().split(" ");
 					if (content[0].equals("STATUS")) {
 						events.add(content[1].replaceAll("_", " "));
@@ -93,43 +89,45 @@ public class MainAgent extends Agent {
 				} else {
 					block();
 				}
-				
+
 			}
-			
+
 		});
 		gui.showGui();
 	}
-	
+
+	@Override
 	public void takeDown() {
 		try {
 			DFService.deregister(this);
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
-		
+
 		gui.dispose();
-		
+
 	}
 
 	public void spawnCars(int num) {
 		spawnCars(num,"CAR_");
 	}
 
-	public void spawnCars(final int num, final String prefix) {
+	public void spawnCars(int num, final String prefix) {
+		num += carCnt;
 		for(; carCnt < num; carCnt++) {
 			final Integer n = new Integer(carCnt);
 			addBehaviour(new WakerBehaviour(this, (long) (Math.random()*50000+1)) {
-	
+
 				@Override
 				public void onWake() {
-					try {						
+					try {
 						int src = (int) (Math.random()*4);
 						int dst = (int) (Math.random()*4);
 
 						if (dst == src) {
 							dst = (dst+1) % 4;
 						}
-						String[] direction = { src+"", dst+"" };			
+						String[] direction = { src+"", dst+"" };
 						AgentController agent = carAgentsContainer.createNewAgent(prefix+"#"+n, CarAgent.class.getCanonicalName(), direction);
 						agent.start();
 						Calendar cal = Calendar.getInstance();
@@ -145,16 +143,16 @@ public class MainAgent extends Agent {
 						e.printStackTrace();
 					}
 				}
-				
+
 			});
 		}
-		
-		
+
+
 	}
 
 	public void startSimulation() {
 		//addBehaviour(new CrossroadControlBehaviour());
-		
+
 	}
 
 }
