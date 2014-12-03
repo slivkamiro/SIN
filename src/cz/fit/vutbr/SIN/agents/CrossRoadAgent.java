@@ -1,71 +1,67 @@
 package cz.fit.vutbr.SIN.agents;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Queue;
-
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
-import jade.util.leap.ArrayList;
-import jade.util.leap.LinkedList;
+
+import java.util.List;
+import java.util.Queue;
 
 public class CrossRoadAgent extends Agent {
 	// Semaphore colors
 	public static final int GREEN = 6;
 	public static final int RED = 7;
-	
+
 	private int semaphoreNorth = GREEN;
 	private int semaphoreSouth = GREEN;
 	private int semaphoreEast = RED;
 	private int semaphoreWest = RED;
-	
+
 	private int CAPACITY = 1;
-	
+
 	// Queues on semaphores - TODO: refator semaphores to array, remake
 	// direction constant in car agent to enum and simplify semaph. methods
 	private Queue<ACLMessage> qN;
 	private Queue<ACLMessage> qS;
 	private Queue<ACLMessage> qE;
 	private Queue<ACLMessage> qW;
-		
+
 	// inner crossroad queues by direction ( for now there is only one lane for direction)
 	private Queue<ACLMessage> qNin;
 	private Queue<ACLMessage> qSin;
 	private Queue<ACLMessage> qEin;
 	private Queue<ACLMessage> qWin;
-	
+
 	private List<Queue<ACLMessage>> queues;
 	private List< Queue<ACLMessage>> innerQueues;
-	
+
 	// Information needed for giving way
 	private ACLMessage leftTurn = null;
 	private Integer waitingIn = null;
-	
+
 	private AID mainControlService;
 
 	// direction where MHD was spotted - no mhd == -1
 	Integer mhdAppearance = -1;
-	
+
 	// default semaphore timeout
 	long semTimeout = 15000;
 
     // time since last color switch
 	long lastSwitchTime = System.currentTimeMillis();
-	
+
+	@Override
 	protected void setup() {
-		
+
 		initQueues();
-		
+
 		System.out.println(getAID().getLocalName()+" agent raises from hell!");
-		
+
 		// Register the crossroad service in the yellow pages
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
@@ -79,10 +75,10 @@ public class CrossRoadAgent extends Agent {
 		catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
-		
+
 		// Get  service
 		getService("main-control");
-		
+
 		// Periodically send statistics
 		addBehaviour(new CyclicBehaviour(){
 
@@ -93,9 +89,9 @@ public class CrossRoadAgent extends Agent {
 					switchColor();
 				}
 			}
-			
+
 		});
-				
+
 		addBehaviour(new CrossroadControlBehaviour());
 
 		// mhd handler
@@ -111,14 +107,14 @@ public class CrossRoadAgent extends Agent {
 			}
 		});
 
-		
+
 		// North traffic
 		addBehaviour(new CyclicBehaviour() {
 
 			@Override
 			public void action() {
-				if (semaphoreNorth == GREEN 
-						&& !isSemaphoreEmpty(CarAgent.NORTH) 
+				if (semaphoreNorth == GREEN
+						&& !isSemaphoreEmpty(CarAgent.NORTH)
 						&& isInnerQueueAvailable(CarAgent.NORTH)) {
 					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.NORTH));
 					ACLMessage reply = queues.get(CarAgent.NORTH).poll();
@@ -135,15 +131,15 @@ public class CrossRoadAgent extends Agent {
 					waitingIn = null;
 				}
 			}
-			
+
 		});
 		// South traffic
 		addBehaviour(new CyclicBehaviour() {
 
 			@Override
 			public void action() {
-				if (semaphoreSouth == GREEN 
-						&& !isSemaphoreEmpty(CarAgent.SOUTH) 
+				if (semaphoreSouth == GREEN
+						&& !isSemaphoreEmpty(CarAgent.SOUTH)
 						&& isInnerQueueAvailable(CarAgent.SOUTH)) {
 					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.SOUTH));
 					ACLMessage reply = queues.get(CarAgent.SOUTH).poll();
@@ -160,15 +156,15 @@ public class CrossRoadAgent extends Agent {
 					waitingIn = null;
 				}
 			}
-			
+
 		});
 		// West traffic
 		addBehaviour(new CyclicBehaviour() {
 
 			@Override
 			public void action() {
-				if (semaphoreWest == GREEN 
-						&& !isSemaphoreEmpty(CarAgent.WEST) 
+				if (semaphoreWest == GREEN
+						&& !isSemaphoreEmpty(CarAgent.WEST)
 						&& isInnerQueueAvailable(CarAgent.WEST)) {
 					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.WEST));
 					ACLMessage reply = queues.get(CarAgent.WEST).poll();
@@ -184,14 +180,14 @@ public class CrossRoadAgent extends Agent {
 					waitingIn = null;
 				}
 			}
-			
+
 		});
 		// East traffic
 		addBehaviour(new CyclicBehaviour() {
 
 			@Override
 			public void action() {
-				if (semaphoreEast == GREEN 
+				if (semaphoreEast == GREEN
 						&& !isSemaphoreEmpty(CarAgent.EAST) && isInnerQueueAvailable(CarAgent.EAST)) {
 					debugLog(" Adding car to inner queue from direction " +  dirToStr(CarAgent.EAST));
 					ACLMessage reply = queues.get(CarAgent.EAST).poll();
@@ -207,9 +203,9 @@ public class CrossRoadAgent extends Agent {
 					waitingIn = null;
 				}
 			}
-			
+
 		});
-		
+
 		// status reporting to MainAgent
 		addBehaviour(new CyclicBehaviour() {
 
@@ -219,21 +215,21 @@ public class CrossRoadAgent extends Agent {
 			}
 		});
 	}
-	
+
 	private void switchColor () {
 		semaphoreNorth =  (semaphoreNorth == RED) ? GREEN : RED;
 		semaphoreSouth =  (semaphoreSouth == RED) ? GREEN : RED;
 		semaphoreWest  =  (semaphoreWest == RED) ? GREEN : RED;
 		semaphoreEast  =  (semaphoreEast == RED) ? GREEN : RED;
-	
+
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.addReceiver(mainControlService);
 		msg.setContent("SEM_SWITCH");
 		send(msg);
-		
+
 		// update last switch time
 		lastSwitchTime = System.currentTimeMillis();
-	
+
 		// DEBUG
 		if (semaphoreNorth == GREEN){
 			System.out.println("[XROAD] SOUTH-NORTH opened");
@@ -242,26 +238,26 @@ public class CrossRoadAgent extends Agent {
 			System.out.println("[XROAD] EAST-WEST opened");
 		}
 	}
-	
+
 	private void initQueues() {
 		// Queues on semaphores
 		qN = new java.util.LinkedList<ACLMessage>();
 		qS = new java.util.LinkedList<ACLMessage>();
 		qE = new java.util.LinkedList<ACLMessage>();
 		qW = new java.util.LinkedList<ACLMessage>();
-		
+
 		queues =  new java.util.ArrayList<Queue<ACLMessage>>();
 		queues.add(qN);
 		queues.add(qS);
 		queues.add(qE);
 		queues.add(qW);
-		
+
 		// inner crossroad queues by direction ( for now there is only one lane for direction)
 		qNin = new java.util.LinkedList<ACLMessage>();
 		qSin = new java.util.LinkedList<ACLMessage>();
 		qEin = new java.util.LinkedList<ACLMessage>();
 		qWin = new java.util.LinkedList<ACLMessage>();
-	
+
 		innerQueues =  new java.util.ArrayList<Queue<ACLMessage>>();
 		innerQueues.add(qNin);
 		innerQueues.add(qSin);
@@ -269,8 +265,8 @@ public class CrossRoadAgent extends Agent {
 		innerQueues.add(qWin);
 
 	}
-	
-	
+
+
 	private void getService( String serviceType) {
 
 		DFAgentDescription template = new DFAgentDescription();
@@ -279,19 +275,20 @@ public class CrossRoadAgent extends Agent {
 		template.addServices(sd);
 		try {
 			DFAgentDescription[] result = DFService.search(this, template);
-			while(result.length == 0)
+			while(result.length == 0) {
 				result = DFService.search(this, template);
+			}
 			mainControlService = result[0].getName();
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
-	
-	
+
+
+
 	private class CrossroadControlBehaviour extends CyclicBehaviour {
 
 		@Override
@@ -327,27 +324,27 @@ public class CrossRoadAgent extends Agent {
 								debugLog(sender, "Moved to inner queue");
 								addToInnerDirectionQueue(s, reply);
 								reply.setPerformative(ACLMessage.CONFIRM);
-								myAgent.send(reply);						
-							}							
+								myAgent.send(reply);
+							}
 						}
 					}
 					else if (msgContent[0].equals("IN_CR")) {
 						// TODO match car from inner queue to sender, we are serving only if it is head of queue
 						Integer src = Integer.parseInt(msgContent[1]);
 						Integer dst = Integer.parseInt(msgContent[2]);
-						
+
 						debugLog(sender, dirToStr(src)+" -> "+dirToStr(dst)+ " entered inner queue");
 						sendToMainControl("CAR_DIRECT " + src+" "+dst);
-						
+
 						try { Thread.sleep(1000); } catch (Exception e) {}
-						
+
 						if (isDstForward(src,dst) || isDstRight(src,dst)) {
 							reply.setPerformative(ACLMessage.CONFIRM);
 							myAgent.send(reply);
 							debugLog(sender, "Removed from inner queue");
 							innerQueues.get(src).poll();
 						}
-						else { 
+						else {
 							// turning left TODO
 							debugLog(sender, " Going left");
 //							check oppsite inner queue
@@ -382,16 +379,18 @@ public class CrossRoadAgent extends Agent {
 				else { // DEBUG branch
 					//System.out.println("XROAD received smth else then request: " + msg.getContent());
 				}
+			} else {
+				block();
 			}
-			
-			
+
+
 			// Standard crossroad control
-			//simulateCrossroad();		
-			
+			//simulateCrossroad();
+
 		}
-		
+
 	}// CrossRoadControlBehaviour
-	
+
 	private Integer getOppositeDirection(Integer src) {
 		if(src < 2) {
 			return src == CarAgent.NORTH ? CarAgent.SOUTH : CarAgent.NORTH;
@@ -399,7 +398,7 @@ public class CrossRoadAgent extends Agent {
 			return src == CarAgent.EAST ? CarAgent.WEST : CarAgent.EAST;
 		}
 	}
-	
+
 	private void sendStatusToMainControl() {
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.addReceiver(mainControlService);
@@ -411,14 +410,14 @@ public class CrossRoadAgent extends Agent {
 		msg.setContent(content);
 		send(msg);
 	}
-	
+
 	private void sendToMainControl(String str) {
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.addReceiver(mainControlService);
 		msg.setContent(str);
 		send(msg);
 	}
-	
+
 	public static String dirToStr(Integer s) {
 		if ( s == CarAgent.NORTH ) {
 			return "NORTH";
@@ -429,18 +428,18 @@ public class CrossRoadAgent extends Agent {
 		} else if (s == CarAgent.EAST) {
 			return "EAST";
 		}
-		
+
 		return "UNKNOWN";
 	}
-	
+
 	void debugLog(AID aid, String msg) {
 		System.out.println("[XROAD] " + aid.getLocalName() + ":" + msg);
 	}
-	
+
 	void debugLog(String msg) {
 		System.out.println("[XROAD]: " + msg);
 	}
-	
+
 	private boolean isDstForward(Integer src, Integer dst) {
 		if (src == CarAgent.NORTH && dst == CarAgent.SOUTH ||
 			src == CarAgent.SOUTH && dst == CarAgent.NORTH ||
@@ -450,7 +449,7 @@ public class CrossRoadAgent extends Agent {
 			}
 			else { return false; }
 		}
-	
+
 	private boolean isDstRight(Integer src, Integer dst) {
 		if (src == CarAgent.NORTH && dst == CarAgent.WEST ||
 			src == CarAgent.SOUTH && dst == CarAgent.EAST ||
@@ -460,29 +459,29 @@ public class CrossRoadAgent extends Agent {
 		}
 		else { return false; }
 	}
-	
+
 	private boolean isSemaphoreEmpty(Integer s) {
 		return queues.get(s).isEmpty();
 	}
-	
+
 	private void addToSemaphoreQueue(Integer s, ACLMessage reply) {
 		queues.get(s).add(reply);
 	}
-	
+
 	private boolean isInnerQueueForDirectionEmpty(Integer s) {
-	return innerQueues.get(s).isEmpty();	
+	return innerQueues.get(s).isEmpty();
 	}
-	
+
 	private void addToInnerDirectionQueue(Integer s, ACLMessage reply){
-		innerQueues.get(s).add(reply);	
+		innerQueues.get(s).add(reply);
 
 	}
-	
+
 	private boolean isInnerQueueAvailable(Integer s) {
 		//System.out.println("[XROAD] Used capacity of inner " +s+ ": " + innerQueues.get(s).size());
 		return innerQueues.get(s).size() < CAPACITY;
 	}
-	
+
 	private Integer getLightOf(Integer s) {
 		if(s == CarAgent.NORTH) {
 			return semaphoreNorth;
@@ -494,5 +493,5 @@ public class CrossRoadAgent extends Agent {
 			return semaphoreEast;
 		}
 	}
-	
+
 }

@@ -112,7 +112,7 @@ public class MainWindow extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				mainAgent.spawnCars(Integer.parseInt(numCars.getText()));
 				mainAgent.spawnCars(Integer.parseInt(numMhd.getText()),"MHD_");
-				//mainAgent.startSimulation();
+				mainAgent.startSimulation();
 
 			}
 
@@ -317,6 +317,7 @@ public class MainWindow extends JFrame {
 			eventsArea.setText(eventsArea.getText()+event);
 		}
 		eventsArea.repaint();
+		eventsArea.setCaretPosition(eventsArea.getDocument().getLength());
 	}
 
 	public void showGui() {
