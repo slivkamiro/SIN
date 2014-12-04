@@ -123,13 +123,13 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.NORTH) {
+				/*if(semaphoreNorth == RED && waitingIn == CarAgent.NORTH) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
 					debugLog("Removed from inner queue "+dirToStr(waitingIn));
 					leftTurn = null;
 					waitingIn = null;
-				}
+				}*/
 			}
 
 		});
@@ -148,13 +148,13 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.SOUTH) {
+				/*if(semaphoreSouth == RED && waitingIn == CarAgent.SOUTH) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
 					debugLog("Removed from inner queue "+dirToStr(waitingIn));
 					leftTurn = null;
 					waitingIn = null;
-				}
+				}*/
 			}
 
 		});
@@ -173,12 +173,12 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.WEST) {
+				/*if(semaphoreWest == RED && waitingIn == CarAgent.WEST) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
 					leftTurn = null;
 					waitingIn = null;
-				}
+				}*/
 			}
 
 		});
@@ -196,12 +196,12 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				if(waitingIn == CarAgent.EAST) {
+				/*if(semaphoreEast == RED && waitingIn == CarAgent.EAST) {
 					myAgent.send(leftTurn);
 					innerQueues.get(waitingIn).poll();
 					leftTurn = null;
 					waitingIn = null;
-				}
+				}*/
 			}
 
 		});
@@ -379,6 +379,11 @@ public class CrossRoadAgent extends Agent {
 				else { // DEBUG branch
 					//System.out.println("XROAD received smth else then request: " + msg.getContent());
 				}
+			} else if (leftTurn != null) {
+				myAgent.send(leftTurn);
+				innerQueues.get(waitingIn).poll();
+				leftTurn = null;
+				waitingIn = null;
 			} else {
 				block();
 			}

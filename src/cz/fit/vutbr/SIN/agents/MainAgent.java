@@ -235,7 +235,7 @@ public class MainAgent extends Agent {
 		// Stats must be planed after 66 seconds because last car can be planned 50 secondes after start
 		// and it can come to crossroad just when red light turn ed on and that takes 15 seconds to pass
 		// it takes one second to get through crossroad
-		addBehaviour(new WakerBehaviour(this,70000) {
+		addBehaviour(new WakerBehaviour(this,100000) {
 			@Override
 			public void onWake(){
 				printStats();
