@@ -207,13 +207,13 @@ public class CrossRoadAgent extends Agent {
 		});
 
 		// status reporting to MainAgent
-		addBehaviour(new CyclicBehaviour() {
+		/*addBehaviour(new CyclicBehaviour() {
 
 			@Override
 			public void action() {
 				sendStatusToMainControl();
 			}
-		});
+		});*/
 	}
 
 	private void switchColor () {
@@ -236,6 +236,15 @@ public class CrossRoadAgent extends Agent {
 		}
 		else {
 			System.out.println("[XROAD] EAST-WEST opened");
+		}
+
+		if (leftTurn != null) {
+			// there is nothing comming in oposite direction
+			// now it is safe to go left
+			send(leftTurn);
+			innerQueues.get(waitingIn).poll();
+			leftTurn = null;
+			waitingIn = null;
 		}
 	}
 
@@ -327,6 +336,7 @@ public class CrossRoadAgent extends Agent {
 								myAgent.send(reply);
 							}
 						}
+						sendStatusToMainControl();
 					}
 					else if (msgContent[0].equals("IN_CR")) {
 						// TODO match car from inner queue to sender, we are serving only if it is head of queue
@@ -345,7 +355,7 @@ public class CrossRoadAgent extends Agent {
 							innerQueues.get(src).poll();
 						}
 						else {
-							// turning left TODO
+							// turning left
 							debugLog(sender, " Going left");
 //							check oppsite inner queue
 							Integer opposite = getOppositeDirection(src);
@@ -355,9 +365,9 @@ public class CrossRoadAgent extends Agent {
 //								if someone is waiting to turn left pull him too
 								if (leftTurn != null) {
 									myAgent.send(reply);
+									myAgent.send(leftTurn);
 									debugLog(sender, "Removed from inner queue");
 									innerQueues.get(src).poll();
-									myAgent.send(leftTurn);
 									debugLog("Removed opposite from inner queue");
 									innerQueues.get(opposite).poll();
 									leftTurn = null;
@@ -375,15 +385,9 @@ public class CrossRoadAgent extends Agent {
 							}
 						}
 					}
-				}
-				else { // DEBUG branch
+				} else { // DEBUG branch
 					//System.out.println("XROAD received smth else then request: " + msg.getContent());
 				}
-			} else if (leftTurn != null) {
-				myAgent.send(leftTurn);
-				innerQueues.get(waitingIn).poll();
-				leftTurn = null;
-				waitingIn = null;
 			} else {
 				block();
 			}

@@ -110,8 +110,12 @@ public class MainWindow extends JFrame {
 		btnRun.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent arg0) {
-				mainAgent.spawnCars(Integer.parseInt(numCars.getText()));
-				mainAgent.spawnCars(Integer.parseInt(numMhd.getText()),"MHD_");
+				try {
+					mainAgent.spawnCars(Integer.parseInt(numCars.getText()));
+				} catch (NumberFormatException e) {}
+				try {
+					mainAgent.spawnCars(Integer.parseInt(numMhd.getText()),"MHD_");
+				} catch (NumberFormatException e) {}
 				mainAgent.startSimulation();
 
 			}

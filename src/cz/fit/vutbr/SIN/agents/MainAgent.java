@@ -232,10 +232,13 @@ public class MainAgent extends Agent {
 	}
 
 	public void startSimulation() {
-		// Stats must be planed after 66 seconds because last car can be planned 50 secondes after start
-		// and it can come to crossroad just when red light turn ed on and that takes 15 seconds to pass
+		// last car can be planned 50 secondes after start
+		// also with 15s of green there can be three semaphore switch
+		// but there is some inteligence in MHD preference
 		// it takes one second to get through crossroad
-		addBehaviour(new WakerBehaviour(this,100000) {
+		// it shouldbe safe to plan stats after 50s + carCnt seconds
+		System.out.println("Statistics planned in "+50+carCnt+"s");
+		addBehaviour(new WakerBehaviour(this,50000+1000*carCnt) {
 			@Override
 			public void onWake(){
 				printStats();
