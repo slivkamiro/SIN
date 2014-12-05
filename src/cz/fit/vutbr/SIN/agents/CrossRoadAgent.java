@@ -337,12 +337,12 @@ public class CrossRoadAgent extends Agent {
 						else {
 							// turning left
 							debugLog(sender, " Going left");
-							//							check oppsite inner queue
+							//	check oppsite inner queue
 							Integer opposite = getOppositeDirection(src);
 							reply.setPerformative(ACLMessage.CONFIRM);
 							// something is going in oposite direction
 							if (!isInnerQueueForDirectionEmpty(opposite)) {
-								//								if someone is waiting to turn left pull him too
+								//	if someone is waiting to turn left pull him too
 								if (leftTurn != null) {
 									myAgent.send(reply);
 									myAgent.send(leftTurn);

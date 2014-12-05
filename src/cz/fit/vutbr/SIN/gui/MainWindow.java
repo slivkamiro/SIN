@@ -279,7 +279,12 @@ public class MainWindow extends JFrame {
 	}
 
 	public void setArrowOnTo(Integer source, Integer destination) {
-
+	
+		if(source == CarAgent.NORTH && NS == Color.RED) return;
+		if(source == CarAgent.SOUTH && NS == Color.RED) return;
+		if(source == CarAgent.WEST && WE == Color.RED) return;
+		if(source == CarAgent.EAST && WE == Color.RED) return;
+	
 		if (source == CarAgent.NORTH) {
 			if (destination == CarAgent.EAST) {
 				sourceNorth.setIcon(iconNE);
@@ -327,18 +332,6 @@ public class MainWindow extends JFrame {
 	public void showGui() {
 		this.setSize(new Dimension(842,512));
 		super.setVisible(true);
-
-	}
-
-	public void cleanAfterSwitch() {
-		if (NS == Color.RED) {
-			sourceNorth.setIcon(null);
-			sourceSouth.setIcon(null);
-		} else {
-			sourceWest.setIcon(null);
-			sourceEast.setIcon(null);
-		}
-		crossroadPanel.repaint();
 
 	}
 }

@@ -109,14 +109,7 @@ public class MainAgent extends Agent {
 
 		});
 
-		addBehaviour(new CyclicBehaviour() {
 
-			@Override
-			public void action() {
-				gui.cleanAfterSwitch();
-			}
-
-		});
 
 		gui.showGui();
 	}
