@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+mkdir -p lib
+cd lib 
+wget www.stud.fit.vutbr.cz/~xstari01/SIN/jade.jar
+wget www.stud.fit.vutbr.cz/~xstari01/SIN/commons-codec-1.3.jar
+cd ..

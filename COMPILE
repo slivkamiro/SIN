@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+
+mkdir -p build
+chmod a+xr build
+
+javac -sourcepath src/ -d build/ -cp ".:lib/jade.jar:lib/commons-codec-1.3.jar" src/cz/fit/vutbr/SIN/agents/*.java
+javac -sourcepath src/ -d build/ -cp ".:lib/jade.jar:lib/commons-codec-1.3.jar" src/cz/fit/vutbr/SIN/gui/*.java
+cp -r src/cz/fit/vutbr/SIN/gui/resources/ build/cz/fit/vutbr/SIN/gui/
+
+mkdir -p bin
+cp lib/* bin/
+
+jar cf bin/project.jar build/cz/fit/vutbr/SIN/agents/*.class  build/cz/fit/vutbr/SIN/gui/*.class
+

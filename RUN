@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+AGENTS="MainAgent:cz.fit.vutbr.SIN.agents.MainAgent;xroad:cz.fit.vutbr.SIN.agents.CrossRoadAgent"
+
+java -cp ".:build:bin/*" jade.Boot -nomtp -gui $AGENTS
