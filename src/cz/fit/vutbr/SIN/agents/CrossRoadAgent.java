@@ -103,6 +103,25 @@ public class CrossRoadAgent extends Agent {
 				}
 			}
 		});
+		
+		// left turners puller
+		addBehaviour(new CyclicBehaviour() {
+			@Override
+			public void action() {
+				if (leftTurn != null) {
+					Integer opposite = getOppositeDirection(waitingIn);
+					if (!isInnerQueueForDirectionEmpty(opposite) || !isSemaphoreEmpty(opposite)) {
+						myAgent.send(leftTurn);	
+						innerQueues.get(waitingIn).poll();
+						debugLog("Removed opposite from inner queue");
+						innerQueues.get(opposite).poll();
+						leftTurn = null;
+						waitingIn = null;
+					}
+				}
+			}
+		});
+
 
 
 		// North traffic
