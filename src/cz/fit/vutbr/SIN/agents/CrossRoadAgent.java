@@ -52,7 +52,7 @@ public class CrossRoadAgent extends Agent {
 	// default semaphore timeout
 	long semTimeout = 15000;
 
-    // time since last color switch
+	// time since last color switch
 	long lastSwitchTime = System.currentTimeMillis();
 
 	@Override
@@ -315,9 +315,9 @@ public class CrossRoadAgent extends Agent {
 						Integer s = Integer.parseInt(msgContent[1]);
 						Integer semLight = getLightOf(s);
 						if (sender.getLocalName().contains("MHD")){
-							   // handle MHD appearance
-							   mhdAppearance = s;
-							}
+							// handle MHD appearance
+							mhdAppearance = s;
+						}
 						if (semLight == RED) {
 							debugLog(sender, "Added to queue");
 							addToSemaphoreQueue(s, reply);
@@ -357,12 +357,12 @@ public class CrossRoadAgent extends Agent {
 						else {
 							// turning left
 							debugLog(sender, " Going left");
-//							check oppsite inner queue
+							//							check oppsite inner queue
 							Integer opposite = getOppositeDirection(src);
 							reply.setPerformative(ACLMessage.CONFIRM);
 							// something is going in oposite direction
 							if (!isInnerQueueForDirectionEmpty(opposite)) {
-//								if someone is waiting to turn left pull him too
+								//								if someone is waiting to turn left pull him too
 								if (leftTurn != null) {
 									myAgent.send(reply);
 									myAgent.send(leftTurn);
@@ -401,11 +401,10 @@ public class CrossRoadAgent extends Agent {
 	}// CrossRoadControlBehaviour
 
 	private Integer getOppositeDirection(Integer src) {
-		if(src < 2) {
+		if(src < 2)
 			return src == CarAgent.NORTH ? CarAgent.SOUTH : CarAgent.NORTH;
-		} else {
+		else
 			return src == CarAgent.EAST ? CarAgent.WEST : CarAgent.EAST;
-		}
 	}
 
 	private void sendStatusToMainControl() {
@@ -428,15 +427,14 @@ public class CrossRoadAgent extends Agent {
 	}
 
 	public static String dirToStr(Integer s) {
-		if ( s == CarAgent.NORTH ) {
+		if ( s == CarAgent.NORTH )
 			return "NORTH";
-		} else if (s == CarAgent.SOUTH) {
+		else if (s == CarAgent.SOUTH)
 			return "SOUTH";
-		} else if (s == CarAgent.WEST) {
+		else if (s == CarAgent.WEST)
 			return "WEST";
-		} else if (s == CarAgent.EAST) {
+		else if (s == CarAgent.EAST)
 			return "EAST";
-		}
 
 		return "UNKNOWN";
 	}
@@ -451,22 +449,22 @@ public class CrossRoadAgent extends Agent {
 
 	private boolean isDstForward(Integer src, Integer dst) {
 		if (src == CarAgent.NORTH && dst == CarAgent.SOUTH ||
-			src == CarAgent.SOUTH && dst == CarAgent.NORTH ||
-			src == CarAgent.WEST && dst == CarAgent.EAST ||
-			src == CarAgent.EAST && dst == CarAgent.WEST ) {
-				return true;
-			}
-			else { return false; }
-		}
+				src == CarAgent.SOUTH && dst == CarAgent.NORTH ||
+				src == CarAgent.WEST && dst == CarAgent.EAST ||
+				src == CarAgent.EAST && dst == CarAgent.WEST )
+			return true;
+		else
+			return false;
+	}
 
 	private boolean isDstRight(Integer src, Integer dst) {
 		if (src == CarAgent.NORTH && dst == CarAgent.WEST ||
-			src == CarAgent.SOUTH && dst == CarAgent.EAST ||
-			src == CarAgent.WEST && dst == CarAgent.SOUTH ||
-			src == CarAgent.EAST && dst == CarAgent.NORTH ) {
+				src == CarAgent.SOUTH && dst == CarAgent.EAST ||
+				src == CarAgent.WEST && dst == CarAgent.SOUTH ||
+				src == CarAgent.EAST && dst == CarAgent.NORTH )
 			return true;
-		}
-		else { return false; }
+		else
+			return false;
 	}
 
 	private boolean isSemaphoreEmpty(Integer s) {
@@ -478,7 +476,7 @@ public class CrossRoadAgent extends Agent {
 	}
 
 	private boolean isInnerQueueForDirectionEmpty(Integer s) {
-	return innerQueues.get(s).isEmpty();
+		return innerQueues.get(s).isEmpty();
 	}
 
 	private void addToInnerDirectionQueue(Integer s, ACLMessage reply){
@@ -492,15 +490,14 @@ public class CrossRoadAgent extends Agent {
 	}
 
 	private Integer getLightOf(Integer s) {
-		if(s == CarAgent.NORTH) {
+		if(s == CarAgent.NORTH)
 			return semaphoreNorth;
-		} else if(s == CarAgent.SOUTH) {
+		else if(s == CarAgent.SOUTH)
 			return semaphoreSouth;
-		} else if(s == CarAgent.WEST) {
+		else if(s == CarAgent.WEST)
 			return semaphoreWest;
-		} else {
+		else
 			return semaphoreEast;
-		}
 	}
 
 }

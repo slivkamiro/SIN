@@ -109,6 +109,15 @@ public class MainAgent extends Agent {
 
 		});
 
+		addBehaviour(new CyclicBehaviour() {
+
+			@Override
+			public void action() {
+				gui.cleanAfterSwitch();
+			}
+
+		});
+
 		gui.showGui();
 	}
 
@@ -232,12 +241,12 @@ public class MainAgent extends Agent {
 	}
 
 	public void startSimulation() {
-		// last car can be planned 50 secondes after start
+		// last car can be planned 50 seconds after start
 		// also with 15s of green there can be three semaphore switch
-		// but there is some inteligence in MHD preference
+		// but there is some intelligence in MHD preference
 		// it takes one second to get through crossroad
-		// it shouldbe safe to plan stats after 50s + carCnt seconds
-		System.out.println("Statistics planned in "+50+carCnt+"s");
+		// it should be safe to plan stats after 50s + carCnt seconds
+		System.out.println("Statistics planned in "+(50+carCnt)+"s");
 		addBehaviour(new WakerBehaviour(this,50000+1000*carCnt) {
 			@Override
 			public void onWake(){

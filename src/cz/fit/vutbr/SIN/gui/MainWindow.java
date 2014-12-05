@@ -257,13 +257,13 @@ public class MainWindow extends JFrame {
 	}
 
 	public void switchSemaphores() {
-			NS = NS == Color.GREEN ? Color.RED : Color.GREEN;
-			WE = WE == Color.GREEN ? Color.RED : Color.GREEN;
-			sourceNorth.setIcon(null);
-			sourceSouth.setIcon(null);
-			sourceWest.setIcon(null);
-			sourceEast.setIcon(null);
-			crossroadPanel.repaint();
+		NS = NS == Color.GREEN ? Color.RED : Color.GREEN;
+		WE = WE == Color.GREEN ? Color.RED : Color.GREEN;
+		sourceNorth.setIcon(null);
+		sourceSouth.setIcon(null);
+		sourceWest.setIcon(null);
+		sourceEast.setIcon(null);
+		crossroadPanel.repaint();
 	}
 
 	public void updateQueue(Integer source,Integer val) {
@@ -327,6 +327,18 @@ public class MainWindow extends JFrame {
 	public void showGui() {
 		this.setSize(new Dimension(842,512));
 		super.setVisible(true);
+
+	}
+
+	public void cleanAfterSwitch() {
+		if (NS == Color.RED) {
+			sourceNorth.setIcon(null);
+			sourceSouth.setIcon(null);
+		} else {
+			sourceWest.setIcon(null);
+			sourceEast.setIcon(null);
+		}
+		crossroadPanel.repaint();
 
 	}
 }
