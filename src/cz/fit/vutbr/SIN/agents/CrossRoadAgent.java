@@ -24,8 +24,7 @@ public class CrossRoadAgent extends Agent {
 
 	private int CAPACITY = 1;
 
-	// Queues on semaphores - TODO: refator semaphores to array, remake
-	// direction constant in car agent to enum and simplify semaph. methods
+	// Queues on semaphores
 	private Queue<ACLMessage> qN;
 	private Queue<ACLMessage> qS;
 	private Queue<ACLMessage> qE;
@@ -59,8 +58,6 @@ public class CrossRoadAgent extends Agent {
 	protected void setup() {
 
 		initQueues();
-
-		System.out.println(getAID().getLocalName()+" agent raises from hell!");
 
 		// Register the crossroad service in the yellow pages
 		DFAgentDescription dfd = new DFAgentDescription();
@@ -123,13 +120,6 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				/*if(semaphoreNorth == RED && waitingIn == CarAgent.NORTH) {
-					myAgent.send(leftTurn);
-					innerQueues.get(waitingIn).poll();
-					debugLog("Removed from inner queue "+dirToStr(waitingIn));
-					leftTurn = null;
-					waitingIn = null;
-				}*/
 			}
 
 		});
@@ -148,13 +138,6 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				/*if(semaphoreSouth == RED && waitingIn == CarAgent.SOUTH) {
-					myAgent.send(leftTurn);
-					innerQueues.get(waitingIn).poll();
-					debugLog("Removed from inner queue "+dirToStr(waitingIn));
-					leftTurn = null;
-					waitingIn = null;
-				}*/
 			}
 
 		});
@@ -173,12 +156,6 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				/*if(semaphoreWest == RED && waitingIn == CarAgent.WEST) {
-					myAgent.send(leftTurn);
-					innerQueues.get(waitingIn).poll();
-					leftTurn = null;
-					waitingIn = null;
-				}*/
 			}
 
 		});
@@ -196,24 +173,10 @@ public class CrossRoadAgent extends Agent {
 					myAgent.send(reply);
 					sendStatusToMainControl();
 				}
-				/*if(semaphoreEast == RED && waitingIn == CarAgent.EAST) {
-					myAgent.send(leftTurn);
-					innerQueues.get(waitingIn).poll();
-					leftTurn = null;
-					waitingIn = null;
-				}*/
 			}
 
 		});
 
-		// status reporting to MainAgent
-		/*addBehaviour(new CyclicBehaviour() {
-
-			@Override
-			public void action() {
-				sendStatusToMainControl();
-			}
-		});*/
 	}
 
 	private void switchColor () {
@@ -329,7 +292,6 @@ public class CrossRoadAgent extends Agent {
 							}
 							else {
 								// queue is empty, and inner queue has free capacity
-								//TODO: we dont care what is in inner queue - we only need to know if it's full
 								debugLog(sender, "Moved to inner queue");
 								addToInnerDirectionQueue(s, reply);
 								reply.setPerformative(ACLMessage.CONFIRM);
@@ -339,7 +301,6 @@ public class CrossRoadAgent extends Agent {
 						sendStatusToMainControl();
 					}
 					else if (msgContent[0].equals("IN_CR")) {
-						// TODO match car from inner queue to sender, we are serving only if it is head of queue
 						Integer src = Integer.parseInt(msgContent[1]);
 						Integer dst = Integer.parseInt(msgContent[2]);
 
@@ -391,10 +352,6 @@ public class CrossRoadAgent extends Agent {
 			} else {
 				block();
 			}
-
-
-			// Standard crossroad control
-			//simulateCrossroad();
 
 		}
 
